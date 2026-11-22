@@ -10,7 +10,7 @@ def test_viewer_can_read_but_not_write(client, owner):
 
     assert [p["sku"] for p in viewer.ok(viewer.get("/products"))] == ["FG-1"]
     org = viewer.ok(viewer.get(f"/organizations/{owner.org_id}"))
-    assert org["my_permissions"] == ["costing.read", "org.read", "pricing.read", "products.read"]
+    assert org["my_permissions"] == ["costing.read", "costs.read", "org.read", "planning.read", "pricing.read", "products.read"]
     r = viewer.post("/products", {"sku": "X", "name": "x", "product_type": "MATERIAL", "business_model": "MANUFACTURING",
                                   "base_unit_id": unit})
     assert r.status_code == 403

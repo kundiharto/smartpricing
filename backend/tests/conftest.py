@@ -25,6 +25,8 @@ from sqlalchemy import create_engine, text  # noqa: E402
 from app.main import app  # noqa: E402
 
 TABLES = [
+    "simulation_runs", "scenario_sales_lines", "scenarios", "cost_allocation_targets", "cost_allocation_rules",
+    "cost_item_versions", "cost_items", "cost_drivers",
     "pricing_recommendations", "costing_versions", "bom_items", "bill_of_materials", "material_prices",
     "products", "units_of_measure", "product_categories", "audit_logs", "member_roles",
     "organization_members", "organization_business_models", "organizations", "users",
@@ -85,6 +87,9 @@ class Api:
 
     def patch(self, path: str, json: Any = None, org_id: str | None = None):
         return self.client.patch(f"/api/v1{path}", json=json, headers=self.headers(org_id))
+
+    def put(self, path: str, json: Any = None, org_id: str | None = None):
+        return self.client.put(f"/api/v1{path}", json=json, headers=self.headers(org_id))
 
     def delete(self, path: str, org_id: str | None = None):
         return self.client.delete(f"/api/v1{path}", headers=self.headers(org_id))

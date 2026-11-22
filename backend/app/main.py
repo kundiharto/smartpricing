@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, FastAPI
 from pricing_engine import ENGINE_VERSION
 
-from app.api import audit_logs, auth, costing, organizations, pricing, products
+from app.api import audit_logs, auth, costing, costs, organizations, planning, pricing, products
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.request_context import RequestIdMiddleware
@@ -31,7 +31,7 @@ def create_app() -> FastAPI:
     def health() -> dict:
         return {"success": True, "data": {"status": "ok", "engine_version": ENGINE_VERSION}}
 
-    for module in (auth, organizations, products, costing, pricing, audit_logs):
+    for module in (auth, organizations, products, costing, pricing, costs, planning, audit_logs):
         api.include_router(module.router)
     app.include_router(api)
     return app

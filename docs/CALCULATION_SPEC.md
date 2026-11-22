@@ -474,3 +474,60 @@ unmet_demand      = max(0, required − (available_regular + overtime_allowed + 
 - Alokasi resiprokal.
 - Kompensasi rugi fiskal dan fasilitas pajak khusus.
 - Konsolidasi multi-currency lintas organisasi.
+
+---
+
+## 14. Rencana Laba & Simulasi Skenario (ditambahkan v1.0.1)
+
+Diimplementasikan di `engine/src/pricing_engine/planning.py` (`profit_plan`, `preview_costs`).
+
+### 14.1 Cost item dan scope
+| Scope | Perlakuan dalam rencana laba |
+|---|---|
+| `PERIOD` | Dihitung sebagai biaya perusahaan pada periode skenario. |
+| `ALLOCATION_POOL` | Dihitung sekali sebagai biaya perusahaan, lalu dialokasikan ke produk untuk laba per produk (full cost). |
+| `PRODUCT` | **Tidak dihitung** — sudah termasuk HPP lewat costing produk (aturan anti double counting §2.4). Dicatat di `excluded_product_scope`. |
+
+Perilaku yang didukung: `FIXED`, `VARIABLE`, `SEMI_VARIABLE`, `STEP_FIXED` (mode `TABLE` dan `CEILING`), `PERCENTAGE` (basis `REVENUE` atau `COGS`).
+
+### 14.2 Periode
+- Setiap cost item punya periode nominal `period_months` ∈ {1, 3, 6, 12}. Skenario punya panjang `M` bulan (1–12).
+- Faktor `k = M / period_months`. Nominal tetap × `k`. Untuk step-fixed, aktivitas per periode item = aktivitas skenario ÷ `k`, lalu biaya tier × `k`.
+- Tarif variabel dan persentase tidak bergantung periode.
+- Versi parameter yang dipakai = versi yang berlaku pada `period_start` skenario (§0.4 `data_nature` dipilih di asumsi). Eskalasi dihitung dari `effective_from` versi sampai `period_start` (§10).
+
+### 14.3 Aktivitas driver
+| Tipe driver | Aktivitas |
+|---|---|
+| `SALES_UNITS`, `PRODUCTION_UNITS` | Total volume rencana penjualan (produksi = penjualan) |
+| `REVENUE` | Total omzet rencana |
+| `LABOR_HOURS`, `MACHINE_HOURS`, `CUSTOM` | Diisi di asumsi skenario (`other_activity`); jika kosong dianggap 0 dengan peringatan `MISSING_DRIVER_ACTIVITY` |
+
+### 14.4 Penyesuaian skenario
+Semua dalam pecahan (> −1): `price_change`, `volume_change`, `unit_cost_change` (HPP/bahan), `variable_cost_change`, `fixed_cost_change`, `item_changes` (per kode biaya), `product_volume_changes`. Diterapkan sebelum perhitungan; pengali biaya tetap/variabel dikombinasikan dengan perubahan per item secara multiplikatif.
+
+### 14.5 Laba rugi
+```
+R    = Σ harga × volume          HPP = Σ biaya produk × volume
+GP   = R − HPP
+CM   = GP − Σ biaya variabel periode
+OP   = CM − Σ biaya tetap periode (termasuk pool alokasi)
+Pajak: NONE | PROFIT_BASED: max(0, OP) × t | TURNOVER_FINAL: max(0, R − omzet bebas) × r
+NP   = OP − pajak
+```
+Asumsi: HPP per unit diperlakukan variabel terhadap volume (biaya tetap yang sudah masuk HPP mengikuti volume).
+
+### 14.6 BEP dan target dengan biaya bertingkat
+- Sales mix tetap; harga rata-rata `p̄ = R/U`, HPP rata-rata `c̄ = HPP/U`.
+- `UCM = p̄ − c̄ − Σ (tarif × d(aktivitas)/dU) − Σ pct × p̄ (atau × c̄)`.
+- Titik henti biaya bertingkat (batas tier / kelipatan kapasitas) membagi volume menjadi segmen. Di setiap segmen biaya tetap konstan: `Q* = ceil(F_seg / UCM)` dan diverifikasi dengan evaluasi langsung.
+- `first_break_even_units` = segmen pertama yang memenuhi; `profitable_ranges` = gabungan rentang dengan laba ≥ 0, dimodelkan sampai `max(10 × U, 2 × tier tertinggi)`.
+- Target laba operasional: `Q = ceil((F_seg + T) / UCM)`; target laba bersih memperhitungkan rezim pajak (PROFIT_BASED: `T/(1 − t)`; TURNOVER_FINAL: kemiringan `UCM − r × p̄`).
+- Jika volume target melewati kapasitas maksimum suatu biaya bertingkat → `capacity_exceeded_items` + peringatan `CAPACITY_EXCEEDED`.
+- `UCM ≤ 0` → `NO_BREAK_EVEN`; tidak ada segmen menguntungkan → `NO_BREAK_EVEN_WITHIN_CAPACITY`.
+- Batas min/maks per item tidak masuk ke kemiringan `UCM` (diperlakukan sebagai komponen tetap).
+
+### 14.7 Profitabilitas produk dan alokasi
+- Biaya variabel diatribusikan ke produk bila driver-nya volume/omzet atau persentase; biaya variabel dari driver lain (jam mesin, dll.) tidak diatribusikan (`unattributed_variable_costs`).
+- Pool alokasi dibagi dengan basis `EQUAL`, `REVENUE`, `UNITS` (otomatis dari rencana), `PERCENTAGE` (harus 100% kecuali `allow_unallocated`), atau `DRIVER` (nilai manual), dibulatkan dengan largest remainder (§6.3).
+- Invarian (diuji): `Σ laba produk setelah alokasi − biaya level perusahaan = laba operasional`.

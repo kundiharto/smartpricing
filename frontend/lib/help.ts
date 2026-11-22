@@ -323,6 +323,158 @@ const HELP: Record<string, Entry> = {
     id: ["Kategori induk jika ingin membuat sub-kategori. Opsional.", "Roti Manis → induk: Roti"],
     en: ["Parent category to create a sub-category. Optional.", "Sweet Bread → parent: Bread"],
   },
+  // --- Biaya ---
+  "cost.code": {
+    id: ["Kode singkat unik untuk pos biaya ini. Dipakai di simulasi untuk mengubah biaya tertentu. Huruf, angka, - dan _.", "SEWA-GUDANG"],
+    en: ["A short unique code for this cost. Used in scenarios to change a specific cost. Letters, digits, - and _.", "WAREHOUSE-RENT"],
+  },
+  "cost.name": {
+    id: ["Nama pos biaya seperti yang dipakai tim keuangan.", "Sewa gudang Cikarang"],
+    en: ["Cost name as your finance team uses it.", "Warehouse rent"],
+  },
+  "cost.category": {
+    id: ["Kelompok biaya untuk laporan. Tidak memengaruhi cara perhitungan.", "Sewa → Operasional tetap; Komisi → Penjualan & pemasaran"],
+    en: ["Grouping for reports. Does not change how it's calculated.", "Rent → Fixed operating; Commission → Selling"],
+  },
+  "cost.behavior": {
+    id: ["Bagaimana biaya ini bergerak terhadap aktivitas. Penjelasan pilihan ada di bawah kolom ini.", undefined],
+    en: ["How this cost moves with activity. The chosen option is explained below.", undefined],
+  },
+  "cost.scope": {
+    id: ["Biaya periode = beban perusahaan (gaji kantor, sewa toko). Pool overhead = dibagikan ke produk untuk laba per produk. Sudah di HPP = sudah masuk costing produk, tidak akan dihitung lagi di simulasi (mencegah hitung ganda).", undefined],
+    en: ["Period cost = company expense (office salaries, shop rent). Overhead pool = spread across products for product profit. Already in COGS = already in product costing, never counted again in simulations (prevents double counting).", undefined],
+  },
+  "cost.driver": {
+    id: ["Aktivitas yang membuat biaya ini naik-turun. Unit terjual/diproduksi dan omzet dihitung otomatis dari rencana penjualan; jam kerja/mesin diisi di skenario.", "Ongkir → Unit terjual; Listrik mesin → Jam mesin"],
+    en: ["The activity that drives this cost. Units sold/produced and revenue come from the sales plan; labor/machine hours are entered in the scenario.", "Freight → Units sold; Machine power → Machine hours"],
+  },
+  "cost.period": {
+    id: ["Nominal tetap berlaku per periode berapa. Sistem menyesuaikan otomatis dengan lama skenario.", "Sewa Rp20 juta per bulan → pilih 'per bulan'"],
+    en: ["Which period the fixed amount covers. Automatically scaled to the scenario length.", "Rent 20 million per month → 'per month'"],
+  },
+  "cost.effective": {
+    id: ["Tanggal parameter ini mulai berlaku.", "1 Januari 2026"],
+    en: ["Date these parameters take effect.", "1 January 2026"],
+  },
+  "cost.baseAmount": {
+    id: ["Nominal biaya tetap per periode nominal (lihat kolom Periode).", "20000000"],
+    en: ["Fixed amount per amount period.", "20000000"],
+  },
+  "cost.rate": {
+    id: ["Biaya per 1 unit aktivitas driver. Untuk driver omzet, isi biaya per Rp1 omzet (mis. 0.02 = 2%).", "2000 per unit terjual"],
+    en: ["Cost per 1 unit of driver activity. For a revenue driver, cost per 1 of revenue (e.g. 0.02 = 2%).", "2000 per unit sold"],
+  },
+  "cost.percentage": {
+    id: ["Persentase dari omzet atau dari HPP.", "5 → komisi 5% dari omzet"],
+    en: ["Percentage of revenue or of COGS.", "5 → 5% commission on revenue"],
+  },
+  "cost.percentageBase": {
+    id: ["Omzet = harga jual × volume. HPP = biaya produk × volume.", undefined],
+    en: ["Revenue = price × volume. COGS = product cost × volume.", undefined],
+  },
+  "cost.stepMode": {
+    id: ["Tabel = Anda menentukan biaya untuk setiap rentang aktivitas. Per sumber daya = sistem menghitung jumlah orang/mesin yang dibutuhkan dari kapasitasnya.", "Tabel: 0–10.000 unit = 5 operator; Per sumber daya: 1 operator per 2.000 unit"],
+    en: ["Table = you set the cost for each activity range. Per resource = the system computes how many people/machines are needed from their capacity.", "Table: 0–10,000 units = 5 operators; Per resource: 1 operator per 2,000 units"],
+  },
+  "cost.tiers": {
+    id: ["Setiap baris: rentang aktivitas per periode nominal dan biayanya. Rentang tidak boleh tumpang tindih. Di atas tier tertinggi sistem memberi peringatan kapasitas.", "0–2.000 unit: 10 juta; 2.001–3.000 unit: 15 juta"],
+    en: ["Each row: an activity range per amount period and its cost. Ranges must not overlap. Above the top tier you get a capacity warning.", "0–2,000 units: 10M; 2,001–3,000 units: 15M"],
+  },
+  "cost.capacity": {
+    id: ["Berapa aktivitas yang bisa ditangani satu orang/mesin per periode nominal.", "2000 unit per operator per bulan"],
+    en: ["How much activity one person/machine handles per amount period.", "2000 units per operator per month"],
+  },
+  "cost.costPerResource": {
+    id: ["Biaya satu orang/mesin per periode nominal.", "6000000 gaji per operator"],
+    en: ["Cost of one person/machine per amount period.", "6000000 salary per operator"],
+  },
+  "cost.maxResources": {
+    id: ["Jumlah maksimum yang tersedia. Opsional; jika terlampaui muncul peringatan kapasitas.", "10 operator"],
+    en: ["Maximum available. Optional; a capacity warning appears if exceeded.", "10 operators"],
+  },
+  "cost.minmax": {
+    id: ["Batas bawah/atas total biaya per periode. Opsional.", "Listrik minimum Rp2 juta/bulan (abonemen)"],
+    en: ["Lower/upper bound for the total per period. Optional.", "Minimum power bill 2M/month"],
+  },
+  "cost.escalation": {
+    id: ["Kenaikan otomatis dari tanggal berlaku, misalnya kenaikan sewa tahunan. Dihitung berdasarkan tanggal mulai skenario.", "Sewa naik 10% per tahun"],
+    en: ["Automatic increase from the effective date, e.g. annual rent increase. Based on the scenario start date.", "Rent +10% per year"],
+  },
+  "cost.source": {
+    id: ["Dari mana angka ini berasal, untuk audit. Opsional.", "Kontrak sewa No. 12/2026"],
+    en: ["Where the number comes from, for audit. Optional.", "Lease contract No. 12/2026"],
+  },
+  "cost.allocBasis": {
+    id: ["Cara membagi pool overhead ke produk. Porsi omzet/volume dihitung otomatis dari rencana penjualan skenario.", "Overhead pabrik dibagi menurut jam mesin tiap produk"],
+    en: ["How to spread the overhead pool across products. Revenue/volume shares come from the scenario's sales plan.", "Factory overhead by machine hours per product"],
+  },
+  "drv.code": {
+    id: ["Kode driver, dipakai saat mengisi aktivitas di skenario.", "JAM-MESIN"],
+    en: ["Driver code, used when entering activity in scenarios.", "MACHINE-H"],
+  },
+  "drv.type": {
+    id: ["Unit terjual, unit diproduksi, dan omzet dihitung otomatis dari rencana penjualan. Jenis lain diisi manual di skenario.", undefined],
+    en: ["Units sold, units produced and revenue are computed from the sales plan. Other types are entered in the scenario.", undefined],
+  },
+  "costs.simulate": {
+    id: ["Perkiraan aktivitas dalam satu periode. Biaya bertingkat dan persentase dihitung dari angka ini.", "Unit 2.500, omzet 150.000.000"],
+    en: ["Expected activity in one period. Step and percentage costs are computed from these numbers.", "Units 2,500, revenue 150,000,000"],
+  },
+
+  // --- Skenario ---
+  "plan.name": {
+    id: ["Nama yang mudah dibedakan saat dibandingkan.", "Rencana 2027 – dasar"],
+    en: ["A name that's easy to tell apart when comparing.", "2027 plan – base"],
+  },
+  "plan.type": {
+    id: ["Label saja untuk membedakan skenario: Dasar (rencana utama), Optimis, Pesimis, atau Kustom.", undefined],
+    en: ["Just a label: Base (main plan), Optimistic, Pessimistic, or Custom.", undefined],
+  },
+  "plan.start": {
+    id: ["Tanggal awal periode. Menentukan versi biaya dan harga bahan yang berlaku, serta eskalasi.", "1 Januari 2027"],
+    en: ["Start of the period. Determines which cost versions apply, and escalation.", "1 January 2027"],
+  },
+  "plan.months": {
+    id: ["Panjang periode simulasi. Volume yang Anda isi adalah total untuk seluruh periode ini; biaya bulanan dikalikan otomatis.", "12 untuk rencana tahunan"],
+    en: ["Simulation length. Volumes you enter are totals for the whole period; monthly costs are scaled automatically.", "12 for an annual plan"],
+  },
+  "plan.lines": {
+    id: ["Produk yang dijual, harga jual bersih (setelah diskon, tanpa PPN), dan volume untuk seluruh periode. HPP diambil dari costing aktif; isi Biaya manual hanya bila belum ada costing.", "Roti Tawar · 12.000 · 30.000 pcs"],
+    en: ["Products sold, net selling price (after discount, excl. VAT) and volume for the whole period. COGS comes from active costing; use Manual cost only if there is none.", "White bread · 12,000 · 30,000 pcs"],
+  },
+  "plan.change": {
+    id: ["Perubahan dalam persen dibanding rencana penjualan dan biaya di atas. Positif = naik, negatif = turun. Isi 0 jika tidak berubah.", "8 → bahan baku naik 8%; -3 → volume turun 3%"],
+    en: ["Percentage change vs the sales plan and costs above. Positive = up, negative = down. 0 if unchanged.", "8 → materials +8%; -3 → volume −3%"],
+  },
+  "plan.itemChanges": {
+    id: ["Ubah satu pos biaya tertentu saja, misalnya listrik naik 12% atau gaji naik 5%.", "LISTRIK +12"],
+    en: ["Change one specific cost only, e.g. electricity +12% or salaries +5%.", "POWER +12"],
+  },
+  "plan.otherActivity": {
+    id: ["Jumlah aktivitas untuk driver yang tidak berasal dari penjualan (jam kerja, jam mesin, dll.) selama periode skenario.", "JAM-MESIN 1.200"],
+    en: ["Activity for drivers not derived from sales (labor hours, machine hours, ...) over the scenario period.", "MACHINE-H 1,200"],
+  },
+  "plan.taxRegime": {
+    id: ["Berbasis laba = tarif × laba sebelum pajak. Final berbasis omzet = tarif × omzet (hanya bila perusahaan Anda memang memakai rezim ini; cek dengan konsultan pajak).", undefined],
+    en: ["Profit-based = rate × profit before tax. Final turnover-based = rate × revenue (only if your company uses this regime; check with a tax advisor).", undefined],
+  },
+  "plan.taxRate": {
+    id: ["Tarif pajak penghasilan dalam persen.", "22 untuk PPh badan"],
+    en: ["Income tax rate in percent.", "22"],
+  },
+  "plan.exempt": {
+    id: ["Bagian omzet yang tidak dikenai pajak dalam periode ini (untuk rezim berbasis omzet). Isi 0 jika tidak ada.", "0"],
+    en: ["Part of turnover exempt from tax in this period (turnover regime). 0 if none.", "0"],
+  },
+  "plan.target": {
+    id: ["Opsional. Sistem menghitung volume dan omzet yang dibutuhkan untuk mencapai target ini, termasuk jika harus menambah karyawan/mesin.", "Laba operasional 50.000.000"],
+    en: ["Optional. The system computes the volume and revenue needed to reach it, including when extra staff/machines are needed.", "Operating profit 50,000,000"],
+  },
+  "plan.dataNature": {
+    id: ["Jenis versi biaya yang dipakai: Standar untuk perencanaan, Aktual untuk realisasi, Estimasi untuk perkiraan.", undefined],
+    en: ["Which cost version type to use: Standard for planning, Actual for realized, Estimate for forecasts.", undefined],
+  },
+
 };
 
 /** Penjelasan metode pricing (ditampilkan di bawah pilihan metode). */
@@ -386,6 +538,22 @@ export const ROLE_HELP: Record<string, { id: string; en: string }> = {
   VIEWER: { id: "Hanya melihat, tidak bisa mengubah apa pun.", en: "Read-only access." },
 };
 
+const BEHAVIOR_HELP: Record<string, { id: string; en: string }> = {
+  FIXED: { id: "Jumlahnya sama berapa pun volume penjualan. Contoh: sewa, gaji staf kantor, langganan software.", en: "Same amount regardless of sales volume. E.g. rent, office salaries, software subscriptions." },
+  VARIABLE: { id: "Naik-turun sebanding dengan aktivitas (tarif × aktivitas). Contoh: ongkir per paket, komisi per unit, listrik per jam mesin.", en: "Moves in proportion to activity (rate × activity). E.g. freight per parcel, per-unit commission, power per machine hour." },
+  SEMI_VARIABLE: { id: "Ada bagian tetap + bagian variabel. Contoh: listrik = abonemen Rp2 juta + Rp1.500 per kWh.", en: "A fixed part plus a variable part. E.g. power = 2M subscription + 1,500 per kWh." },
+  STEP_FIXED: { id: "Tetap dalam satu rentang, lalu naik bertingkat saat aktivitas melewati ambang. Contoh: 5 operator sampai 10.000 unit, 8 operator sampai 15.000 unit.", en: "Fixed within a range, then steps up when activity crosses a threshold. E.g. 5 operators up to 10,000 units, 8 up to 15,000." },
+  PERCENTAGE: { id: "Persentase dari omzet atau HPP. Contoh: komisi sales 5% dari omzet, royalti 2%.", en: "A percentage of revenue or COGS. E.g. 5% sales commission, 2% royalty." },
+};
+
+const ALLOC_HELP: Record<string, { id: string; en: string }> = {
+  EQUAL: { id: "Dibagi sama rata ke semua produk tujuan.", en: "Split equally across target products." },
+  REVENUE: { id: "Dibagi sesuai porsi omzet tiap produk di skenario. Produk yang lebih laku menanggung overhead lebih besar.", en: "Split by each product's share of scenario revenue." },
+  UNITS: { id: "Dibagi sesuai porsi volume tiap produk di skenario.", en: "Split by each product's share of scenario volume." },
+  PERCENTAGE: { id: "Anda menentukan persentase tiap produk; totalnya harus 100%.", en: "You set each product's percentage; must total 100%." },
+  DRIVER: { id: "Dibagi menurut nilai aktivitas yang Anda isi per produk, misalnya jam mesin atau luas gudang yang dipakai.", en: "Split by the activity value you enter per product, e.g. machine hours or warehouse space used." },
+};
+
 export type HelpText = { text: string; example?: string };
 
 export function useHelp() {
@@ -402,6 +570,8 @@ export function useHelp() {
   const method = useCallback((m: string) => METHOD_HELP[m]?.[lang] ?? "", [lang]);
   const structure = useCallback((s: string) => STRUCTURE_HELP[s]?.[lang] ?? "", [lang]);
   const role = useCallback((r: string) => ROLE_HELP[r]?.[lang] ?? "", [lang]);
+  const behavior = useCallback((b: string) => BEHAVIOR_HELP[b]?.[lang] ?? "", [lang]);
+  const allocation = useCallback((b: string) => ALLOC_HELP[b]?.[lang] ?? "", [lang]);
   const exampleLabel = lang === "id" ? "Contoh" : "Example";
-  return { help, method, structure, role, exampleLabel };
+  return { help, method, structure, role, behavior, allocation, exampleLabel };
 }

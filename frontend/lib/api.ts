@@ -33,7 +33,7 @@ export function setOrgId(id: string | null) {
 }
 
 type Options = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   query?: Record<string, string | number | undefined | null>;
   org?: string | null | false; // false = tanpa header organisasi
@@ -78,6 +78,8 @@ export const api = {
     request<T>(path, { ...opts, method: "POST", body: body ?? {} }).then((r) => r.data),
   patch: <T>(path: string, body: unknown, opts?: Omit<Options, "method" | "body">) =>
     request<T>(path, { ...opts, method: "PATCH", body }).then((r) => r.data),
+  put: <T>(path: string, body: unknown, opts?: Omit<Options, "method" | "body">) =>
+    request<T>(path, { ...opts, method: "PUT", body }).then((r) => r.data),
   del: <T>(path: string, opts?: Omit<Options, "method" | "body">) => request<T>(path, { ...opts, method: "DELETE" }).then((r) => r.data),
 };
 

@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 import { useOrg } from "./org";
-import type { Category, Product, Unit } from "./types";
+import type { Category, CostDriver, Product, Unit } from "./types";
 
 export function useUnits() {
   const { orgId } = useOrg();
@@ -27,4 +27,9 @@ export function useAllProducts(productType?: string) {
 
 export function byId<T extends { id: string }>(rows: T[] | undefined): Record<string, T> {
   return Object.fromEntries((rows ?? []).map((r) => [r.id, r]));
+}
+
+export function useDrivers() {
+  const { orgId } = useOrg();
+  return useQuery({ queryKey: ["drivers", orgId], queryFn: () => api.get<CostDriver[]>("/cost-drivers"), enabled: Boolean(orgId) });
 }

@@ -250,3 +250,130 @@ class PricingRecommendation(Base):
     status: Mapped[str] = mapped_column(server_default="DRAFT")
     created_at: Mapped[datetime] = created()
     created_by: Mapped[uuid.UUID | None]
+
+
+# --- Biaya & perencanaan (migrasi 0002) -------------------------------------
+
+
+class CostDriver(Base):
+    __tablename__ = "cost_drivers"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    code: Mapped[str]
+    name: Mapped[str]
+    driver_type: Mapped[str]
+    unit_label: Mapped[str | None]
+    created_at: Mapped[datetime] = created()
+
+
+class CostItem(Base):
+    __tablename__ = "cost_items"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    code: Mapped[str]
+    name: Mapped[str]
+    category: Mapped[str]
+    behavior_type: Mapped[str]
+    cost_scope: Mapped[str]
+    driver_id: Mapped[uuid.UUID | None]
+    period_months: Mapped[int] = mapped_column(server_default=text("1"))
+    description: Mapped[str | None]
+    status: Mapped[str] = mapped_column(server_default="ACTIVE")
+    created_at: Mapped[datetime] = created()
+    created_by: Mapped[uuid.UUID | None]
+    updated_at: Mapped[datetime] = created()
+    row_version: Mapped[int] = mapped_column(server_default=text("1"))
+
+
+class CostItemVersion(Base):
+    __tablename__ = "cost_item_versions"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    cost_item_id: Mapped[uuid.UUID]
+    version_number: Mapped[int]
+    effective_from: Mapped[date]
+    effective_to: Mapped[date | None]
+    data_nature: Mapped[str] = mapped_column(server_default="STANDARD")
+    base_amount: Mapped[Decimal | None] = mapped_column(MONEY)
+    rate: Mapped[Decimal | None] = mapped_column(Numeric(20, 6))
+    percentage: Mapped[Decimal | None] = mapped_column(RATE)
+    percentage_base: Mapped[str | None]
+    step_mode: Mapped[str | None]
+    tiers: Mapped[list[Any] | None]
+    capacity_per_resource: Mapped[Decimal | None] = mapped_column(QTY)
+    cost_per_resource: Mapped[Decimal | None] = mapped_column(MONEY)
+    max_resources: Mapped[Decimal | None] = mapped_column(QTY)
+    minimum_amount: Mapped[Decimal | None] = mapped_column(MONEY)
+    maximum_amount: Mapped[Decimal | None] = mapped_column(MONEY)
+    escalation_type: Mapped[str | None]
+    escalation_rate: Mapped[Decimal | None] = mapped_column(RATE)
+    escalation_amount: Mapped[Decimal | None] = mapped_column(MONEY)
+    escalation_frequency: Mapped[str | None]
+    escalation_cap: Mapped[Decimal | None] = mapped_column(MONEY)
+    source_reference: Mapped[str | None]
+    created_at: Mapped[datetime] = created()
+    created_by: Mapped[uuid.UUID | None]
+
+
+class CostAllocationRule(Base):
+    __tablename__ = "cost_allocation_rules"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    cost_item_id: Mapped[uuid.UUID]
+    basis: Mapped[str]
+    driver_label: Mapped[str | None]
+    allow_unallocated: Mapped[bool] = mapped_column(server_default=text("false"))
+    updated_at: Mapped[datetime] = created()
+    updated_by: Mapped[uuid.UUID | None]
+
+
+class CostAllocationTarget(Base):
+    __tablename__ = "cost_allocation_targets"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    rule_id: Mapped[uuid.UUID]
+    product_id: Mapped[uuid.UUID]
+    value: Mapped[Decimal | None] = mapped_column(QTY)
+
+
+class Scenario(Base):
+    __tablename__ = "scenarios"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    name: Mapped[str]
+    description: Mapped[str | None]
+    scenario_type: Mapped[str] = mapped_column(server_default="CUSTOM")
+    base_scenario_id: Mapped[uuid.UUID | None]
+    period_start: Mapped[date]
+    period_months: Mapped[int]
+    assumptions: Mapped[dict[str, Any]]
+    status: Mapped[str] = mapped_column(server_default="ACTIVE")
+    created_at: Mapped[datetime] = created()
+    created_by: Mapped[uuid.UUID | None]
+    updated_at: Mapped[datetime] = created()
+    row_version: Mapped[int] = mapped_column(server_default=text("1"))
+
+
+class ScenarioSalesLine(Base):
+    __tablename__ = "scenario_sales_lines"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    scenario_id: Mapped[uuid.UUID]
+    product_id: Mapped[uuid.UUID]
+    unit_price: Mapped[Decimal] = mapped_column(MONEY)
+    volume: Mapped[Decimal] = mapped_column(QTY)
+    unit_cost_override: Mapped[Decimal | None] = mapped_column(MONEY)
+
+
+class SimulationRun(Base):
+    __tablename__ = "simulation_runs"
+    id: Mapped[uuid.UUID] = pk()
+    organization_id: Mapped[uuid.UUID]
+    scenario_id: Mapped[uuid.UUID]
+    engine_version: Mapped[str]
+    input_snapshot: Mapped[dict[str, Any]]
+    result_snapshot: Mapped[dict[str, Any]]
+    input_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str]
+    created_at: Mapped[datetime] = created()
+    created_by: Mapped[uuid.UUID | None]

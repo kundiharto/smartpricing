@@ -154,3 +154,123 @@ export type AuditLog = {
   request_id: string | null;
   created_at: string;
 };
+
+// --- Biaya & perencanaan ---------------------------------------------------
+
+export type DriverType = "SALES_UNITS" | "PRODUCTION_UNITS" | "REVENUE" | "LABOR_HOURS" | "MACHINE_HOURS" | "CUSTOM";
+export type CostDriver = { id: string; code: string; name: string; driver_type: DriverType; unit_label: string | null };
+export type Behavior = "FIXED" | "VARIABLE" | "SEMI_VARIABLE" | "STEP_FIXED" | "PERCENTAGE";
+export type CostScope = "PRODUCT" | "PERIOD" | "ALLOCATION_POOL";
+export type TierRow = { from_activity: Dec; to_activity: Dec; amount: Dec };
+
+export type CostVersion = {
+  id: string;
+  version_number: number;
+  effective_from: string;
+  effective_to: string | null;
+  data_nature: string;
+  base_amount: Dec | null;
+  rate: Dec | null;
+  percentage: Dec | null;
+  percentage_base: "REVENUE" | "COGS" | null;
+  step_mode: "TABLE" | "CEILING" | null;
+  tiers: TierRow[] | null;
+  capacity_per_resource: Dec | null;
+  cost_per_resource: Dec | null;
+  max_resources: Dec | null;
+  minimum_amount: Dec | null;
+  maximum_amount: Dec | null;
+  escalation_type: "NOMINAL" | "SIMPLE_PCT" | "COMPOUND_PCT" | null;
+  escalation_rate: Dec | null;
+  escalation_amount: Dec | null;
+  escalation_frequency: string | null;
+  escalation_cap: Dec | null;
+  source_reference: string | null;
+  created_at: string;
+};
+
+export type CostItem = {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  behavior_type: Behavior;
+  cost_scope: CostScope;
+  driver_id: string | null;
+  period_months: number;
+  description: string | null;
+  status: string;
+  row_version: number;
+  updated_at: string;
+  driver: CostDriver | null;
+  current_version: CostVersion | null;
+  has_allocation: boolean;
+  versions?: CostVersion[];
+  allocation?: { basis: string; driver_label: string | null; allow_unallocated: boolean; targets: { product_id: string; value: Dec | null }[] } | null;
+};
+
+export type CostPreviewRow = { code: string; name: string; category: string; behavior: string; scope: string; fixed: Dec; variable: Dec; total: Dec; tier?: Dec[]; resource_count?: Dec; capacity_exceeded?: boolean; escalation?: string };
+export type CostPreview = EngineResult & { values: { items: CostPreviewRow[]; fixed_total: Dec; variable_total: Dec; total: Dec }; items_without_version: string[]; excluded_product_scope: string[] };
+
+export type Assumptions = {
+  price_change: Dec;
+  volume_change: Dec;
+  unit_cost_change: Dec;
+  variable_cost_change: Dec;
+  fixed_cost_change: Dec;
+  item_changes: Record<string, Dec>;
+  product_volume_changes: Record<string, Dec>;
+  other_activity: Record<string, Dec>;
+  tax_regime: "NONE" | "PROFIT_BASED" | "TURNOVER_FINAL";
+  tax_rate: Dec;
+  exempt_turnover: Dec;
+  target_kind: "OPERATING_PROFIT" | "NET_PROFIT" | null;
+  target_amount: Dec | null;
+  data_nature: string;
+};
+
+export type SalesLine = { product_id: string; unit_price: Dec; volume: Dec; unit_cost_override: Dec | null; sku: string; product_name: string; active_unit_cost: Dec | null };
+export type RunSummary = { id: string; created_at: string; status: string; revenue: Dec | null; operating_profit: Dec | null; net_profit: Dec | null; break_even_units: Dec | null; warnings: Warning[] };
+
+export type Scenario = {
+  id: string;
+  name: string;
+  description: string | null;
+  scenario_type: "BASE" | "OPTIMISTIC" | "PESSIMISTIC" | "CUSTOM";
+  base_scenario_id: string | null;
+  period_start: string;
+  period_months: number;
+  assumptions: Assumptions;
+  status: string;
+  row_version: number;
+  updated_at: string;
+  lines: SalesLine[];
+  latest_run: RunSummary | null;
+};
+
+export type Pnl = {
+  revenue: Dec; cogs: Dec; gross_profit: Dec; gross_margin: Dec; variable_costs: Dec; contribution: Dec; contribution_margin: Dec;
+  fixed_costs: Dec; operating_profit: Dec; operating_margin: Dec; income_tax: Dec; net_profit: Dec; net_margin: Dec;
+};
+export type BreakEven = {
+  status: string; units: Dec | null; revenue: Dec | null; margin_of_safety: Dec | null; average_price: Dec; average_unit_cost: Dec;
+  unit_contribution: Dec; profitable_ranges: Dec[][]; modeled_up_to_units: Dec; assumption: string;
+};
+export type PlanTarget = { kind: string; amount: Dec; status: string; units: Dec | null; revenue: Dec | null; change_vs_plan: Dec | null; achieved: boolean; capacity_exceeded_items?: string[] };
+export type PlanLine = {
+  product: string; unit_price: Dec; unit_cost: Dec; volume: Dec; revenue: Dec; cogs: Dec; variable_costs: Dec; contribution: Dec;
+  contribution_margin: Dec | null; allocated_costs: Dec; profit_after_allocation: Dec;
+};
+export type PlanValues = {
+  period_months: number; pnl: Pnl; units: Dec; lines: PlanLine[]; costs: CostPreviewRow[]; costs_by_category: Record<string, Dec>;
+  excluded_product_scope: string[]; break_even: BreakEven; target: PlanTarget | null; company_level_costs: Dec; unattributed_variable_costs: Dec;
+};
+export type Run = {
+  id: string; scenario_id: string; engine_version: string; input_hash: string; status: string; created_at: string;
+  input_snapshot: Record<string, unknown>;
+  result_snapshot: EngineResult & { values: PlanValues; products: Record<string, { sku: string; name: string }>; items_without_version: string[] };
+};
+export type CompareEntry = {
+  scenario_id: string; name: string; scenario_type: string; period_start: string; period_months: number; status: string;
+  message?: string | null; pnl?: Pnl; break_even?: BreakEven; target?: PlanTarget | null; units?: Dec; warnings?: Warning[];
+};

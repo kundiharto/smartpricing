@@ -186,3 +186,35 @@ Pemetaan ke PRD §8.5 ditandai `[PRD-n]`.
 | 16. Scenario reproducibility | REP-01–03 |
 | 17. Currency precision | PRE-01–03 |
 | 18. Historical reproduction | HIS-01–02 |
+
+---
+
+## 15. Rencana Laba & Skenario (CALCULATION_SPEC §14)
+
+Data uji: A (harga 100.000, HPP 60.000, 1.000 unit), B (50.000, 20.000, 1.000 unit). Biaya per bulan: sewa tetap 20 jt; komisi 5% omzet; ongkir 2.000/unit terjual; operator step TABLE 0–2.000 → 10 jt, 2.001–3.000 → 15 jt; overhead pool 6 jt dialokasikan driver A:B = 2:1; bahan penolong scope PRODUCT 500/unit (harus diabaikan).
+
+| ID | Kasus | Expected |
+|---|---|---|
+| PLN-01 | Laba rugi, PPh berbasis laba 22% | R 150 jt; HPP 80 jt; variabel 11,5 jt; tetap 36 jt; OP 22,5 jt; PPh 4,95 jt; NP 17,55 jt; PENOLONG dikecualikan |
+| PLN-02 | BEP dengan step cost | UCM 29.250; BEP 1.231 unit; omzet 92.325.000; MoS 0,3845 |
+| PLN-03 | Target OP 50 jt melewati tier | 3.112 unit; omzet 233.400.000 |
+| PLN-04 | Target NP 39 jt (PPh 22%) | 3.112 unit |
+| PLN-05 | PPh final 0,5% omzet | PPh 750.000; NP 21.750.000 |
+| PLN-06 | Profitabilitas & alokasi | A: kontribusi 33 jt, alokasi 4 jt, laba 29 jt; B: 25,5 / 23,5 jt; biaya level perusahaan 30 jt; invarian terpenuhi |
+| PLN-07 | Alokasi porsi omzet | A 4 jt, B 2 jt |
+| PLN-08 | Alokasi persentase 90% | INVALID_INPUT |
+| PLN-09 | Target melewati kapasitas maksimum | `capacity_exceeded_items = [OPERATOR]` + CAPACITY_EXCEEDED |
+| SCN-01 | Volume +10% | U 2.200 → operator tier 2; tetap 41 jt; OP 23,35 jt |
+| SCN-02 | Volume +60% | peringatan CAPACITY_EXCEEDED |
+| SCN-03 | HPP +8%, tetap +5%, komisi +20% | HPP 86,4 jt; variabel 13 jt; tetap 37,8 jt; OP 12,8 jt |
+| SCN-04 | Harga +4% | R 156 jt; variabel 11,8 jt |
+| PER-01 | Skenario 12 bulan | biaya tetap 432 jt |
+| ESC-07 | Eskalasi dalam rencana | sewa 22 jt (10%, 1 tahun) |
+| STP-01 | Step CEILING 400 unit/operator | 5 operator, 25 jt; BEP 143 unit |
+| BEP-10 | Harga < HPP | NO_BREAK_EVEN |
+| DRV-01 | Driver jam tanpa aktivitas | MISSING_DRIVER_ACTIVITY; dengan 100 jam → variabel 5 jt, tidak teratribusi |
+| VAL-01 | Input tidak valid | item tanpa driver / rencana kosong / produk ganda → INVALID_INPUT |
+| PRV-01 | Pratinjau biaya 2.500 unit | total 47,5 jt; tetap 35 jt |
+| REP-04 | Rencana dua kali | hasil identik |
+
+Tes integrasi backend (`backend/tests/test_costs_planning.py`) menjalankan skenario yang sama lewat API dan harus menghasilkan angka identik, ditambah: versi biaya berversi tanggal & immutable, validasi alokasi, run append-only, izin, dan isolasi tenant.

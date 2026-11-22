@@ -9,7 +9,7 @@ export function money(value: string | null | undefined, currency = "IDR", lang: 
   if (value === null || value === undefined || value === "") return "—";
   const n = Number(value);
   if (!Number.isFinite(n)) return value;
-  const digits = exact ? Math.min(Math.max(decimals(value), MINOR[currency] ?? 2), 4) : (MINOR[currency] ?? 2);
+  const digits = exact ? Math.min(Math.max(decimals(trimDecimal(value)), MINOR[currency] ?? 2), 4) : (MINOR[currency] ?? 2);
   return new Intl.NumberFormat(LOCALES[lang], {
     style: "currency",
     currency,

@@ -6,12 +6,14 @@ import {
   ChevronDown,
   FileClock,
   LayoutDashboard,
+  LineChart,
   ListChecks,
   LogOut,
   Menu,
   Package,
   Ruler,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -41,6 +43,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
         { href: "/products", label: t("nav.products"), icon: Package, permission: "products.read" },
+        { href: "/costs", label: t("nav.costs"), icon: Wallet, permission: "costs.read" },
+      ],
+    },
+    {
+      title: t("nav.planning"),
+      items: [
+        { href: "/planning", label: t("nav.scenarios"), icon: LineChart, permission: "planning.read" },
       ],
     },
     {

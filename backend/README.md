@@ -62,6 +62,8 @@ Tes integrasi (memakai database `spe_test`, dibangun ulang setiap sesi):
 | BOM | `GET/POST /products/{id}/bom` (versi baru menggantikan versi aktif) |
 | Costing | `GET/POST /products/{id}/costing`, `GET /products/{id}/costing/{versionId}` |
 | Pricing | `POST /pricing/calculate`, `POST /pricing/recommend`, `GET /pricing/recommendations[/{id}]` |
+| Biaya | `GET/POST /cost-drivers`, `GET/POST /costs`, `GET/PATCH/DELETE /costs/{id}`, `POST /costs/{id}/versions`, `PUT /costs/{id}/allocation`, `POST /costs/preview` |
+| Perencanaan | `GET/POST /scenarios`, `GET/PATCH/DELETE /scenarios/{id}`, `POST /scenarios/{id}/duplicate`, `POST /scenarios/{id}/run`, `GET /scenarios/{id}/runs`, `GET /simulation-runs/{id}`, `POST /scenarios/compare` |
 | Audit | `GET /audit-logs` |
 
 Endpoint selain auth dan organisasi memerlukan header `Authorization: Bearer <token>` dan `X-Organization-Id`.
@@ -69,5 +71,5 @@ Angka finansial dikirim sebagai string desimal (`"0.30"`); angka float ditolak.
 
 ## Belum termasuk di tahap ini
 
-Approval harga & publikasi price list, cost items/driver/alokasi via API, pajak (`tax_rules`),
+Approval harga & publikasi price list, pajak (`tax_rules`),
 sales channel, kurs, undangan pengguna via email, reset password, rate limiting, dan idempotency key.
