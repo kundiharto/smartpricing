@@ -10,6 +10,7 @@ import enum
 import functools
 import hashlib
 import json
+import uuid
 from dataclasses import dataclass
 from datetime import date
 from decimal import (
@@ -254,6 +255,8 @@ def _canonical(obj: Any) -> Any:
         return obj.value
     if isinstance(obj, date):
         return obj.isoformat()
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
     if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
         return {
             "__type__": type(obj).__name__,
@@ -266,6 +269,11 @@ def _canonical(obj: Any) -> Any:
     if isinstance(obj, float):
         return f"float:{obj!r}"  # tetap ter-hash; validasi menolaknya
     return repr(obj)
+
+
+def canonical(obj: Any) -> Any:
+    """Bentuk JSON-safe dan stabil dari input/output (untuk snapshot)."""
+    return _canonical(obj)
 
 
 def input_hash(calculation: str, inputs: dict[str, Any]) -> str:
@@ -336,6 +344,7 @@ __all__ = [
     "Status",
     "Warning_",
     "calculation",
+    "canonical",
     "ceil_int",
     "currency_quantum",
     "dec",

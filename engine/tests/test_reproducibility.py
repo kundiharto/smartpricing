@@ -70,6 +70,6 @@ def test_PRE_02_currency_precision():
     assert quantize_money(D("0.5"), "IDR") == D("1")  # ROUND_HALF_UP
 
 
-@pytest.mark.skip(reason="HIS-02 diuji di fase backend: memerlukan tabel costing_versions berversi")
+@pytest.mark.skip(reason="HIS-02 diuji di backend: tests/test_products_costing.py::test_new_costing_supersedes_and_keeps_history_HIS_02")
 def test_HIS_02_history_not_deleted():
     pass
