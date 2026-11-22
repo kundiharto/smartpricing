@@ -87,23 +87,23 @@ export function PricesTab({ product }: { product: Product }) {
         <form onSubmit={(e) => { e.preventDefault(); add.mutate(); }} className="space-y-4">
           {add.error && <Alert>{errorText(add.error)}</Alert>}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={`${t("mp.price")} (${org?.default_currency})`}>
+            <Field label={`${t("mp.price")} (${org?.default_currency})`} help="mp.price">
               {(id) => <DecimalInput id={id} required value={form.unit_price} onChange={(v) => setForm({ ...form, unit_price: v })} />}
             </Field>
-            <Field label={t("mp.from")}>
+            <Field label={t("mp.from")} help="mp.from">
               {(id) => <Input id={id} type="date" required value={form.effective_from} onChange={(e) => setForm({ ...form, effective_from: e.target.value })} />}
             </Field>
-            <Field label={t("mp.nature")}>
+            <Field label={t("mp.nature")} help="mp.nature">
               {(id) => (
                 <Select id={id} value={form.data_nature} onChange={(e) => setForm({ ...form, data_nature: e.target.value })}>
                   {NATURES.map((n) => <option key={n} value={n}>{t(`nature.${n}`)}</option>)}
                 </Select>
               )}
             </Field>
-            <Field label={`${t("mp.supplier")} (${t("common.optional")})`}>
+            <Field label={`${t("mp.supplier")} (${t("common.optional")})`} help="mp.supplier">
               {(id) => <Input id={id} value={form.supplier_name} onChange={(e) => setForm({ ...form, supplier_name: e.target.value })} />}
             </Field>
-            <Field label={`${t("mp.source")} (${t("common.optional")})`} className="sm:col-span-2">
+            <Field label={`${t("mp.source")} (${t("common.optional")})`} help="mp.source" className="sm:col-span-2">
               {(id) => <Input id={id} value={form.source_reference} onChange={(e) => setForm({ ...form, source_reference: e.target.value })} />}
             </Field>
           </div>

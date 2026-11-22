@@ -5,7 +5,8 @@ import { Plus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
-import { Alert, Button, Card, CardHeader, DecimalInput, Field, Input, PageHeader, Select, Stat, Trace } from "@/components/ui";
+import { Alert, Button, Card, CardHeader, DecimalInput, Field, HelpPanel, Input, LegendWithHelp, PageHeader, Select, Stat, Trace } from "@/components/ui";
+import { useHelp } from "@/lib/help";
 import { api, engineTrace, errorText } from "@/lib/api";
 import { money, pct, percentToFraction, today } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
@@ -54,6 +55,8 @@ function Calculator() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const currency = org?.default_currency ?? "IDR";
   const needs = NEEDS[method];
+  const { method: methodHelp, help, exampleLabel } = useHelp();
+  const feesHelp = help("price.fees");
 
   const body = () => ({
     method,
@@ -86,8 +89,8 @@ function Calculator() {
   const r = calc.data;
   const trace = engineTrace(calc.error);
 
-  const input = (key: keyof typeof v, label: string, suffix?: string, hint?: string) => (
-    <Field label={label} hint={hint}>{(id) => <DecimalInput id={id} suffix={suffix} value={v[key]} onChange={(x) => setV({ ...v, [key]: x })} required />}</Field>
+  const input = (key: keyof typeof v, label: string, suffix?: string, help?: string) => (
+    <Field label={label} help={help}>{(id) => <DecimalInput id={id} suffix={suffix} value={v[key]} onChange={(x) => setV({ ...v, [key]: x })} required />}</Field>
   );
 
   return (
@@ -103,7 +106,7 @@ function Calculator() {
             }}
           >
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={t("price.product")} className="sm:col-span-2">
+              <Field label={t("price.product")} help="price.product" className="sm:col-span-2">
                 {(id) => (
                   <Select id={id} value={productId} onChange={(e) => setProductId(e.target.value)}>
                     <option value="">{t("price.manual")}</option>
@@ -111,30 +114,40 @@ function Calculator() {
                   </Select>
                 )}
               </Field>
-              {!productId && input("unit_cost", `${t("price.unitCost")} (${currency})`)}
-              {input("variable_cost", `${t("price.variable")} (${currency})`)}
-              <Field label={t("price.method")} className="sm:col-span-2">
-                {(id) => (
-                  <Select id={id} value={method} onChange={(e) => setMethod(e.target.value as Method)}>
-                    {METHODS.map((m) => <option key={m} value={m}>{t(`method.${m}`)}</option>)}
-                  </Select>
-                )}
-              </Field>
-              {needs.includes("margin") && input("margin", t("price.margin"), "%")}
-              {needs.includes("markup") && input("markup", t("price.markup"), "%")}
-              {needs.includes("fixed") && input("fixed", `${t("price.fixed")} (${currency})`)}
-              {needs.includes("volume") && input("volume", t("price.volume"))}
-              {needs.includes("top") && input("top", `${t("price.top")} (${currency})`)}
-              {needs.includes("reference") && input("reference", `${t("price.reference")} (${currency})`)}
-              {needs.includes("adjust") && input("adjust", t("price.adjust"), "%")}
-              {input("discount", t("price.discount"), "%")}
-              {input("tax", t("price.taxLoad"), "%")}
+              {!productId && input("unit_cost", `${t("price.unitCost")} (${currency})`, undefined, "price.unitCost")}
+              {input("variable_cost", `${t("price.variable")} (${currency})`, undefined, "price.variable")}
+              <div className="space-y-2 sm:col-span-2">
+                <Field label={t("price.method")} help="price.method">
+                  {(id) => (
+                    <Select id={id} value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+                      {METHODS.map((m) => <option key={m} value={m}>{t(`method.${m}`)}</option>)}
+                    </Select>
+                  )}
+                </Field>
+                <Alert tone="info" title={t(`method.${method}`)}>{methodHelp(method)}</Alert>
+              </div>
+              {needs.includes("margin") && input("margin", t("price.margin"), "%", "price.margin")}
+              {needs.includes("markup") && input("markup", t("price.markup"), "%", "price.markup")}
+              {needs.includes("fixed") && input("fixed", `${t("price.fixed")} (${currency})`, undefined, "price.fixed")}
+              {needs.includes("volume") && input("volume", t("price.volume"), undefined, "price.volume")}
+              {needs.includes("top") && input("top", `${t("price.top")} (${currency})`, undefined, "price.top")}
+              {needs.includes("reference") && input("reference", `${t("price.reference")} (${currency})`, undefined, "price.reference")}
+              {needs.includes("adjust") && input("adjust", t("price.adjust"), "%", "price.adjust")}
+              {input("discount", t("price.discount"), "%", "price.discount")}
+              {input("tax", t("price.taxLoad"), "%", "price.taxLoad")}
             </div>
 
-            <fieldset className="space-y-2">
-              <legend className="text-sm font-medium">{t("price.fees")}</legend>
+            <fieldset className="group/field space-y-2">
+              <legend className="mb-2"><LegendWithHelp label={t("price.fees")} help="price.fees" /></legend>
+              {fees.length > 0 && (
+                <div className="grid grid-cols-[1fr_6rem_9rem_2.5rem] gap-2 text-xs text-muted">
+                  <span>{t("price.feeName")}</span>
+                  <span className="text-right">{t("price.feeRate")}</span>
+                  <span className="flex items-center gap-1">{t("price.feeBase")} <LegendWithHelp label={t("price.feeBase")} help="price.feeBase" iconOnly /></span>
+                </div>
+              )}
               {fees.map((f, i) => (
-                <div key={i} className="grid grid-cols-[1fr_6rem_9rem_auto] gap-2">
+                <div key={i} className="grid grid-cols-[1fr_6rem_9rem_2.5rem] gap-2">
                   <Input aria-label={t("price.feeName")} placeholder={t("price.feeName")} value={f.name} onChange={(e) => setFees(fees.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
                   <DecimalInput aria-label={t("price.feeRate")} suffix="%" value={f.rate} onChange={(val) => setFees(fees.map((x, j) => (j === i ? { ...x, rate: val } : x)))} />
                   <Select aria-label={t("price.feeBase")} value={f.base} onChange={(e) => setFees(fees.map((x, j) => (j === i ? { ...x, base: e.target.value } : x)))}>
@@ -143,6 +156,7 @@ function Calculator() {
                   <Button type="button" variant="ghost" size="sm" onClick={() => setFees(fees.filter((_, j) => j !== i))} aria-label={t("common.remove")}><Trash2 className="size-4" /></Button>
                 </div>
               ))}
+              {feesHelp && <HelpPanel text={feesHelp.text} example={feesHelp.example} exampleLabel={exampleLabel} />}
               <Button type="button" variant="secondary" size="sm" onClick={() => setFees([...fees, { name: "", rate: "", base: "NET_PRICE" }])}>
                 <Plus className="size-4" /> {t("price.addFee")}
               </Button>
@@ -157,8 +171,8 @@ function Calculator() {
               </legend>
               {rounding.enabled && (
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Field label={t("price.increment")}>{(id) => <DecimalInput id={id} value={rounding.increment} onChange={(x) => setRounding({ ...rounding, increment: x })} />}</Field>
-                  <Field label={t("price.mode")}>
+                  <Field label={t("price.increment")} help="price.increment">{(id) => <DecimalInput id={id} value={rounding.increment} onChange={(x) => setRounding({ ...rounding, increment: x })} />}</Field>
+                  <Field label={t("price.mode")} help="price.mode">
                     {(id) => (
                       <Select id={id} value={rounding.mode} onChange={(e) => setRounding({ ...rounding, mode: e.target.value })}>
                         <option value="NEAREST">NEAREST</option>
@@ -167,7 +181,7 @@ function Calculator() {
                       </Select>
                     )}
                   </Field>
-                  <Field label={t("price.applyTo")}>
+                  <Field label={t("price.applyTo")} help="price.applyTo">
                     {(id) => (
                       <Select id={id} value={rounding.apply_to} onChange={(e) => setRounding({ ...rounding, apply_to: e.target.value })}>
                         <option value="LIST_PRICE">{t("base.LIST_PRICE")}</option>
@@ -175,10 +189,13 @@ function Calculator() {
                       </Select>
                     )}
                   </Field>
-                  <label className="flex items-center gap-2 text-sm sm:col-span-3">
-                    <input type="checkbox" checked={rounding.margin_guard} onChange={(e) => setRounding({ ...rounding, margin_guard: e.target.checked })} className="accent-[var(--accent)]" />
-                    {t("price.guard")}
-                  </label>
+                  <div className="flex items-center gap-1.5 sm:col-span-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={rounding.margin_guard} onChange={(e) => setRounding({ ...rounding, margin_guard: e.target.checked })} className="accent-[var(--accent)]" />
+                      {t("price.guard")}
+                    </label>
+                    <LegendWithHelp label={t("price.guard")} help="price.guard" iconOnly />
+                  </div>
                 </div>
               )}
             </fieldset>
@@ -212,7 +229,7 @@ function Calculator() {
               {productId && can("pricing.recommend") && (
                 <Card>
                   <div className="flex flex-wrap items-end gap-3 p-5">
-                    <Field label={t("price.effective")} className="w-48">
+                    <Field label={t("price.effective")} help="price.effective" className="w-64">
                       {(id) => <Input id={id} type="date" value={effective} onChange={(e) => setEffective(e.target.value)} />}
                     </Field>
                     <Button onClick={() => save.mutate()} loading={save.isPending} disabled={Boolean(savedId)}>

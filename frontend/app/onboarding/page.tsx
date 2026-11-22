@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AuthCard } from "@/components/auth-card";
-import { Alert, Button, cn, Field, Input, Select } from "@/components/ui";
+import { Alert, Button, cn, Field, Input, LegendWithHelp, Select } from "@/components/ui";
 import { api, errorText, setOrgId } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import type { Organization } from "@/lib/types";
@@ -73,7 +73,7 @@ export default function OnboardingPage() {
       <form onSubmit={submit} className="space-y-5">
         {error && <Alert>{error}</Alert>}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t("common.name")} className="sm:col-span-2">
+          <Field label={t("common.name")} help="org.name" className="sm:col-span-2">
             {(id) => (
               <Input
                 id={id}
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
               />
             )}
           </Field>
-          <Field label={t("onb.slug")} className="sm:col-span-2">
+          <Field label={t("onb.slug")} help="org.slug" className="sm:col-span-2">
             {(id) => (
               <Input
                 id={id}
@@ -101,7 +101,7 @@ export default function OnboardingPage() {
               />
             )}
           </Field>
-          <Field label={t("onb.currency")}>
+          <Field label={t("onb.currency")} help="org.currency">
             {(id) => (
               <Select id={id} value={currency} onChange={(e) => setCurrency(e.target.value)}>
                 {["IDR", "USD", "SGD", "MYR", "EUR"].map((c) => (
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
               </Select>
             )}
           </Field>
-          <Field label={t("onb.fiscal")}>
+          <Field label={t("onb.fiscal")} help="org.fiscal">
             {(id) => (
               <Select id={id} value={fiscal} onChange={(e) => setFiscal(e.target.value)}>
                 {months.map((m, i) => (
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
         </div>
 
         <fieldset>
-          <legend className="text-sm font-medium">{t("onb.models")}</legend>
+          <legend><LegendWithHelp label={t("onb.models")} help="org.models" /></legend>
           <p className="mb-2 text-xs text-muted">{t("onb.hybridHint")}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {MODELS.map((m) => {

@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Alert, Badge, Button, Card, CardHeader, DecimalInput, Dialog, Empty, Field, Input, Select, Spinner, statusTone, Table, Td, Th } from "@/components/ui";
+import { Alert, Badge, Button, Card, CardHeader, DecimalInput, Dialog, Empty, Field, HelpPanel, Input, LegendWithHelp, Select, Spinner, statusTone, Table, Td, Th } from "@/components/ui";
+import { useHelp } from "@/lib/help";
 import { api, errorText } from "@/lib/api";
 import { date, fractionToPercent, num, pct, percentToFraction, today, trimDecimal } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
@@ -23,6 +24,8 @@ export function BomTab({ product }: { product: Product }) {
   const [open, setOpen] = useState(false);
   const [head, setHead] = useState({ planned_output_qty: "", yield_pct: "100", effective_from: today(), notes: "" });
   const [lines, setLines] = useState<Line[]>([]);
+  const [lineFocus, setLineFocus] = useState<string | null>(null);
+  const { help, exampleLabel } = useHelp();
 
   const q = useQuery({ queryKey: ["bom", orgId, product.id], queryFn: () => api.get<Bom[]>(`/products/${product.id}/bom`) });
   const active = q.data?.find((b) => b.status === "ACTIVE");
@@ -125,27 +128,31 @@ export function BomTab({ product }: { product: Product }) {
             {create.error && <Alert>{errorText(create.error)}</Alert>}
             <Alert tone="info">{t("bom.wasteHint")}</Alert>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field label={t("bom.output")}>{(id) => <DecimalInput id={id} required value={head.planned_output_qty} onChange={(v) => setHead({ ...head, planned_output_qty: v })} />}</Field>
-              <Field label={t("bom.yield")}>{(id) => <DecimalInput id={id} required suffix="%" value={head.yield_pct} onChange={(v) => setHead({ ...head, yield_pct: v })} />}</Field>
-              <Field label={t("mp.from")}>{(id) => <Input id={id} type="date" required value={head.effective_from} onChange={(e) => setHead({ ...head, effective_from: e.target.value })} />}</Field>
+              <Field label={t("bom.output")} help="bom.output">{(id) => <DecimalInput id={id} required value={head.planned_output_qty} onChange={(v) => setHead({ ...head, planned_output_qty: v })} />}</Field>
+              <Field label={t("bom.yield")} help="bom.yield">{(id) => <DecimalInput id={id} required suffix="%" value={head.yield_pct} onChange={(v) => setHead({ ...head, yield_pct: v })} />}</Field>
+              <Field label={t("mp.from")} help="mp.from">{(id) => <Input id={id} type="date" required value={head.effective_from} onChange={(e) => setHead({ ...head, effective_from: e.target.value })} />}</Field>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2" onBlur={() => setLineFocus(null)}>
+              <div className="grid grid-cols-[1fr_8rem_6rem_2.5rem] gap-2">
+                <LegendWithHelp label={t("bom.material")} help="bom.material" />
+                <LegendWithHelp label={t("bom.netQty")} help="bom.netQty" />
+                <LegendWithHelp label={t("bom.waste")} help="bom.waste" />
+              </div>
               {lines.map((l, i) => (
-                <div key={i} className="grid grid-cols-[1fr_8rem_6rem_auto] items-end gap-2">
-                  <Field label={i === 0 ? t("bom.material") : ""}>
-                    {(id) => (
-                      <Select id={id} value={l.material_product_id} onChange={(e) => setLine(i, { material_product_id: e.target.value })} aria-label={t("bom.material")}>
-                        {materials.data.map((m) => <option key={m.id} value={m.id}>{m.name} ({m.sku})</option>)}
-                      </Select>
-                    )}
-                  </Field>
-                  <Field label={i === 0 ? t("bom.netQty") : ""}>{(id) => <DecimalInput id={id} required value={l.net_quantity} onChange={(v) => setLine(i, { net_quantity: v })} aria-label={t("bom.netQty")} />}</Field>
-                  <Field label={i === 0 ? t("bom.waste") : ""}>{(id) => <DecimalInput id={id} suffix="%" value={l.waste_pct} onChange={(v) => setLine(i, { waste_pct: v })} aria-label={t("bom.waste")} />}</Field>
-                  <Button type="button" variant="ghost" size="sm" className="mb-1" onClick={() => setLines(lines.filter((_, j) => j !== i))} disabled={lines.length === 1} aria-label={t("common.remove")}>
+                <div key={i} className="grid grid-cols-[1fr_8rem_6rem_2.5rem] items-center gap-2">
+                  <Select value={l.material_product_id} onFocus={() => setLineFocus("bom.material")} onChange={(e) => setLine(i, { material_product_id: e.target.value })} aria-label={t("bom.material")}>
+                    {materials.data.map((m) => <option key={m.id} value={m.id}>{m.name} ({m.sku})</option>)}
+                  </Select>
+                  <DecimalInput required value={l.net_quantity} onFocus={() => setLineFocus("bom.netQty")} onChange={(v) => setLine(i, { net_quantity: v })} aria-label={t("bom.netQty")} />
+                  <DecimalInput suffix="%" value={l.waste_pct} onFocus={() => setLineFocus("bom.waste")} onChange={(v) => setLine(i, { waste_pct: v })} aria-label={t("bom.waste")} />
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setLines(lines.filter((_, j) => j !== i))} disabled={lines.length === 1} aria-label={t("common.remove")}>
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
               ))}
+              {lineFocus && help(lineFocus) && (
+                <HelpPanel always text={help(lineFocus)!.text} example={help(lineFocus)!.example} exampleLabel={exampleLabel} />
+              )}
               <Button type="button" variant="secondary" size="sm" onClick={() => setLines([...lines, { material_product_id: materials.data[0].id, net_quantity: "", waste_pct: "0" }])}>
                 <Plus className="size-4" /> {t("bom.addLine")}
               </Button>

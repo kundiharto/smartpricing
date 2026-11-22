@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Alert, Button, Card, CardHeader, Empty, Input, PageHeader, Select, Spinner, Table, Td, Th } from "@/components/ui";
+import { Alert, Button, Card, CardHeader, Empty, HelpPanel, Input, LegendWithHelp, PageHeader, Select, Spinner, Table, Td, Th } from "@/components/ui";
+import { useHelp } from "@/lib/help";
 import { api, errorText } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useOrg } from "@/lib/org";
@@ -20,6 +21,7 @@ export default function CatalogPage() {
   const writable = can("products.write");
   const [unit, setUnit] = useState({ code: "", name: "", dimension: "COUNT" });
   const [cat, setCat] = useState({ name: "", parent_id: "" });
+  const [focus, setFocus] = useState<string | null>(null);
 
   const addUnit = useMutation({
     mutationFn: () => api.post("/units", unit),
@@ -43,13 +45,18 @@ export default function CatalogPage() {
         <Card>
           <CardHeader title={t("catalog.units")} />
           {writable && (
-            <form onSubmit={(e) => { e.preventDefault(); addUnit.mutate(); }} className="grid grid-cols-[6rem_1fr_8rem_auto] gap-2 border-b border-line p-4">
-              <Input aria-label={t("common.code")} placeholder="kg" required value={unit.code} onChange={(e) => setUnit({ ...unit, code: e.target.value })} />
-              <Input aria-label={t("common.name")} placeholder={t("common.name")} required value={unit.name} onChange={(e) => setUnit({ ...unit, name: e.target.value })} />
-              <Select aria-label={t("catalog.dimension")} value={unit.dimension} onChange={(e) => setUnit({ ...unit, dimension: e.target.value })}>
+            <form onSubmit={(e) => { e.preventDefault(); addUnit.mutate(); }} onBlur={() => setFocus(null)} className="grid grid-cols-[6rem_1fr_8rem_auto] gap-2 border-b border-line p-4">
+              <LegendWithHelp label={t("common.code")} help="unit.code" />
+              <LegendWithHelp label={t("common.name")} help="unit.name" />
+              <LegendWithHelp label={t("catalog.dimension")} help="unit.dimension" />
+              <span />
+              <Input aria-label={t("common.code")} placeholder="kg" required onFocus={() => setFocus("unit.code")} value={unit.code} onChange={(e) => setUnit({ ...unit, code: e.target.value })} />
+              <Input aria-label={t("common.name")} placeholder="Kilogram" required onFocus={() => setFocus("unit.name")} value={unit.name} onChange={(e) => setUnit({ ...unit, name: e.target.value })} />
+              <Select aria-label={t("catalog.dimension")} onFocus={() => setFocus("unit.dimension")} value={unit.dimension} onChange={(e) => setUnit({ ...unit, dimension: e.target.value })}>
                 {DIMENSIONS.map((d) => <option key={d}>{d}</option>)}
               </Select>
               <Button type="submit" loading={addUnit.isPending}>{t("common.add")}</Button>
+              {focus?.startsWith("unit.") && <div className="col-span-4"><FocusHelp k={focus} /></div>}
               {addUnit.error && <div className="col-span-4"><Alert>{errorText(addUnit.error)}</Alert></div>}
             </form>
           )}
@@ -68,13 +75,17 @@ export default function CatalogPage() {
         <Card>
           <CardHeader title={t("catalog.categories")} />
           {writable && (
-            <form onSubmit={(e) => { e.preventDefault(); addCat.mutate(); }} className="grid grid-cols-[1fr_10rem_auto] gap-2 border-b border-line p-4">
-              <Input aria-label={t("common.name")} placeholder={t("common.name")} required value={cat.name} onChange={(e) => setCat({ ...cat, name: e.target.value })} />
-              <Select aria-label={t("catalog.parent")} value={cat.parent_id} onChange={(e) => setCat({ ...cat, parent_id: e.target.value })}>
+            <form onSubmit={(e) => { e.preventDefault(); addCat.mutate(); }} onBlur={() => setFocus(null)} className="grid grid-cols-[1fr_10rem_auto] gap-2 border-b border-line p-4">
+              <LegendWithHelp label={t("common.name")} help="cat.name" />
+              <LegendWithHelp label={t("catalog.parent")} help="cat.parent" />
+              <span />
+              <Input aria-label={t("common.name")} placeholder={t("common.name")} required onFocus={() => setFocus("cat.name")} value={cat.name} onChange={(e) => setCat({ ...cat, name: e.target.value })} />
+              <Select aria-label={t("catalog.parent")} onFocus={() => setFocus("cat.parent")} value={cat.parent_id} onChange={(e) => setCat({ ...cat, parent_id: e.target.value })}>
                 <option value="">{t("catalog.parent")}: —</option>
                 {categories.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
               <Button type="submit" loading={addCat.isPending}>{t("common.add")}</Button>
+              {focus?.startsWith("cat.") && <div className="col-span-3"><FocusHelp k={focus} /></div>}
               {addCat.error && <div className="col-span-3"><Alert>{errorText(addCat.error)}</Alert></div>}
             </form>
           )}
@@ -92,4 +103,10 @@ export default function CatalogPage() {
       </div>
     </>
   );
+}
+
+function FocusHelp({ k }: { k: string }) {
+  const { help, exampleLabel } = useHelp();
+  const entry = help(k);
+  return entry ? <HelpPanel always text={entry.text} example={entry.example} exampleLabel={exampleLabel} /> : null;
 }

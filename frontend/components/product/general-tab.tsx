@@ -62,12 +62,12 @@ export function GeneralTab({ product }: { product: Product }) {
         {archive.error && <Alert>{errorText(archive.error)}</Alert>}
         {saved && <Alert tone="ok">{t("org.saved")}</Alert>}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t("common.name")} className="sm:col-span-2">
+          <Field label={t("common.name")} help="prod.name" className="sm:col-span-2">
             {(id) => <Input id={id} value={form.name} disabled={!editable} required onChange={(e) => setForm({ ...form, name: e.target.value })} />}
           </Field>
-          <Field label={t("prod.sku")}>{(id) => <Input id={id} value={product.sku} disabled />}</Field>
+          <Field label={t("prod.sku")} help="prod.sku">{(id) => <Input id={id} value={product.sku} disabled />}</Field>
           <Field label={t("prod.unit")}>{(id) => <Input id={id} value={byId(units.data)[product.base_unit_id]?.code ?? ""} disabled />}</Field>
-          <Field label={t("prod.category")}>
+          <Field label={t("prod.category")} help="prod.category">
             {(id) => (
               <Select id={id} value={form.category_id} disabled={!editable} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
                 <option value="">—</option>
@@ -75,7 +75,7 @@ export function GeneralTab({ product }: { product: Product }) {
               </Select>
             )}
           </Field>
-          <Field label={t("common.status")}>
+          <Field label={t("common.status")} help="prod.status">
             {(id) => (
               <Select id={id} value={form.status} disabled={!editable} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                 {product.status === "ARCHIVED" && <option value="ARCHIVED">{t("status.ARCHIVED")}</option>}
@@ -84,7 +84,7 @@ export function GeneralTab({ product }: { product: Product }) {
               </Select>
             )}
           </Field>
-          <Field label={t("prod.description")} className="sm:col-span-2">
+          <Field label={t("prod.description")} help="prod.description" className="sm:col-span-2">
             {(id) => <Textarea id={id} value={form.description} disabled={!editable} onChange={(e) => setForm({ ...form, description: e.target.value })} />}
           </Field>
         </div>

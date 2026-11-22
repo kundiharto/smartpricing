@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
-import { Alert, Badge, Button, Card, CardHeader, Dialog, Empty, Field, Input, PageHeader, Spinner, statusTone, Table, Td, Th } from "@/components/ui";
+import { Alert, Badge, Button, Card, CardHeader, Dialog, Empty, Field, Input, LegendWithHelp, PageHeader, Spinner, statusTone, Table, Td, Th } from "@/components/ui";
+import { useHelp } from "@/lib/help";
 import { api, errorText } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useOrg } from "@/lib/org";
@@ -29,6 +30,7 @@ export default function UsersPage() {
       setRoles(["VIEWER"]);
     },
   });
+  const { role: roleHelp } = useHelp();
   const assignable = org?.my_roles.includes("OWNER") ? ROLES : ROLES.filter((r) => r !== "OWNER");
 
   return (
@@ -71,19 +73,22 @@ export default function UsersPage() {
         <form onSubmit={(e) => { e.preventDefault(); add.mutate(); }} className="space-y-4">
           {add.error && <Alert>{errorText(add.error)}</Alert>}
           <Alert tone="info">{t("users.addHint")}</Alert>
-          <Field label={t("auth.email")}>{(id) => <Input id={id} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />}</Field>
+          <Field label={t("auth.email")} help="users.email">{(id) => <Input id={id} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />}</Field>
           <fieldset>
-            <legend className="mb-2 text-sm font-medium">{t("users.roles")}</legend>
+            <legend className="mb-2"><LegendWithHelp label={t("users.roles")} help="users.roles" /></legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {assignable.map((r) => (
-                <label key={r} className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm">
+                <label key={r} className="flex items-start gap-2 rounded-lg border border-line px-3 py-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
                   <input
                     type="checkbox"
                     checked={roles.includes(r)}
                     onChange={() => setRoles(roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r])}
-                    className="accent-[var(--accent)]"
+                    className="mt-0.5 accent-[var(--accent)]"
                   />
-                  {r}
+                  <span>
+                    <span className="font-medium">{r}</span>
+                    <span className="mt-0.5 block text-xs text-muted">{roleHelp(r)}</span>
+                  </span>
                 </label>
               ))}
             </div>

@@ -57,24 +57,24 @@ export default function OrganizationSettingsPage() {
             {saved && <Alert tone="ok">{t("org.saved")}</Alert>}
             {!editable && <Alert tone="info">{t("common.noPermission")}</Alert>}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={t("common.name")} className="sm:col-span-2">
+              <Field label={t("common.name")} help="org.name" className="sm:col-span-2">
                 {(id) => <Input id={id} value={form.name} disabled={!editable} required onChange={(e) => setForm({ ...form, name: e.target.value })} />}
               </Field>
-              <Field label={t("onb.currency")}>
+              <Field label={t("onb.currency")} help="org.currency">
                 {(id) => (
                   <Select id={id} value={form.default_currency} disabled={!editable} onChange={(e) => setForm({ ...form, default_currency: e.target.value })}>
                     {["IDR", "USD", "SGD", "MYR", "EUR"].map((c) => <option key={c}>{c}</option>)}
                   </Select>
                 )}
               </Field>
-              <Field label={t("onb.fiscal")}>
+              <Field label={t("onb.fiscal")} help="org.fiscal">
                 {(id) => (
                   <Select id={id} value={form.fiscal_year_start_month} disabled={!editable} onChange={(e) => setForm({ ...form, fiscal_year_start_month: Number(e.target.value) })}>
                     {months.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
                   </Select>
                 )}
               </Field>
-              <Field label={t("org.language")}>
+              <Field label={t("org.language")} help="org.language">
                 {(id) => (
                   <Select id={id} value={form.default_language} disabled={!editable} onChange={(e) => setForm({ ...form, default_language: e.target.value })}>
                     <option value="id">Bahasa Indonesia</option>
@@ -82,7 +82,7 @@ export default function OrganizationSettingsPage() {
                   </Select>
                 )}
               </Field>
-              <Field label={t("org.timezone")}>
+              <Field label={t("org.timezone")} help="org.timezone">
                 {(id) => (
                   <Select id={id} value={form.timezone} disabled={!editable} onChange={(e) => setForm({ ...form, timezone: e.target.value })}>
                     {["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "Asia/Singapore", "UTC"].map((z) => <option key={z}>{z}</option>)}

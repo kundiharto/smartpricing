@@ -165,30 +165,30 @@ function ProductDialog({ open, onClose, defaultModel, businessModels }: { open: 
         <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="space-y-4">
           {create.error && <Alert>{errorText(create.error)}</Alert>}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t("prod.sku")}>{(id) => <Input id={id} required value={form.sku} onChange={set("sku")} />}</Field>
-            <Field label={t("prod.type")}>
+            <Field label={t("prod.sku")} help="prod.sku">{(id) => <Input id={id} required value={form.sku} onChange={set("sku")} />}</Field>
+            <Field label={t("prod.type")} help="prod.type">
               {(id) => (
                 <Select id={id} value={form.product_type} onChange={set("product_type")}>
                   {TYPES.map((x) => <option key={x} value={x}>{t(`pt.${x}`)}</option>)}
                 </Select>
               )}
             </Field>
-            <Field label={t("common.name")} className="sm:col-span-2">{(id) => <Input id={id} required value={form.name} onChange={set("name")} />}</Field>
-            <Field label={t("prod.unit")}>
+            <Field label={t("common.name")} help="prod.name" className="sm:col-span-2">{(id) => <Input id={id} required value={form.name} onChange={set("name")} />}</Field>
+            <Field label={t("prod.unit")} help="prod.unit">
               {(id) => (
                 <Select id={id} value={form.base_unit_id} onChange={set("base_unit_id")} required>
                   {units.data.map((u) => <option key={u.id} value={u.id}>{u.code} — {u.name}</option>)}
                 </Select>
               )}
             </Field>
-            <Field label={t("prod.model")}>
+            <Field label={t("prod.model")} help="prod.model">
               {(id) => (
                 <Select id={id} value={form.business_model} onChange={set("business_model")}>
                   {(businessModels.length ? businessModels : [defaultModel]).map((m) => <option key={m} value={m}>{t(`bm.${m}`)}</option>)}
                 </Select>
               )}
             </Field>
-            <Field label={`${t("prod.category")} (${t("common.optional")})`} className="sm:col-span-2">
+            <Field label={`${t("prod.category")} (${t("common.optional")})`} help="prod.category" className="sm:col-span-2">
               {(id) => (
                 <Select id={id} value={form.category_id} onChange={set("category_id")}>
                   <option value="">—</option>
@@ -196,7 +196,7 @@ function ProductDialog({ open, onClose, defaultModel, businessModels }: { open: 
                 </Select>
               )}
             </Field>
-            <Field label={`${t("prod.description")} (${t("common.optional")})`} className="sm:col-span-2">
+            <Field label={`${t("prod.description")} (${t("common.optional")})`} help="prod.description" className="sm:col-span-2">
               {(id) => <Textarea id={id} value={form.description} onChange={set("description")} />}
             </Field>
           </div>

@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Alert, Badge, Button, Card, CardHeader, DecimalInput, Dialog, Empty, Field, Input, Select, Spinner, Stat, statusTone, Table, Td, Textarea, Th, Trace } from "@/components/ui";
+import { Alert, Badge, Button, Card, CardHeader, DecimalInput, Dialog, Empty, Field, HelpPanel, Input, LegendWithHelp, Select, Spinner, Stat, statusTone, Table, Td, Textarea, Th, Trace } from "@/components/ui";
+import { useHelp } from "@/lib/help";
 import { api, engineTrace, errorText } from "@/lib/api";
 import { date, dateTime, money, num, percentToFraction, today } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
@@ -157,19 +158,27 @@ function CostingDetail({ version }: { version: CostingVersion }) {
   );
 }
 
-function ResourceRows({ label, rows, onChange }: { label: string; rows: Resource[]; onChange: (r: Resource[]) => void }) {
+function ResourceRows({ label, help, rows, onChange }: { label: string; help: string; rows: Resource[]; onChange: (r: Resource[]) => void }) {
   const { t } = useI18n();
+  const { help: getHelp, exampleLabel } = useHelp();
+  const entry = getHelp(help);
   return (
-    <fieldset className="space-y-2">
-      <legend className="text-sm font-medium">{label}</legend>
+    <fieldset className="group/field space-y-2">
+      <legend className="mb-2"><LegendWithHelp label={label} help={help} /></legend>
+      {rows.length > 0 && (
+        <div className="grid grid-cols-[1fr_6rem_9rem_2.5rem] gap-2 text-xs text-muted">
+          <span>{t("common.name")}</span><span className="text-right">{t("cost.hours")}</span><span className="text-right">{t("cost.rate")}</span>
+        </div>
+      )}
       {rows.map((r, i) => (
-        <div key={i} className="grid grid-cols-[1fr_6rem_9rem_auto] gap-2">
+        <div key={i} className="grid grid-cols-[1fr_6rem_9rem_2.5rem] gap-2">
           <Input aria-label={t("common.name")} placeholder={t("common.name")} value={r.name} onChange={(e) => onChange(rows.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} required />
           <DecimalInput aria-label={t("cost.hours")} placeholder={t("cost.hours")} value={r.hours} onChange={(v) => onChange(rows.map((x, j) => (j === i ? { ...x, hours: v } : x)))} required />
           <DecimalInput aria-label={t("cost.rate")} placeholder={t("cost.rate")} value={r.hourly_rate} onChange={(v) => onChange(rows.map((x, j) => (j === i ? { ...x, hourly_rate: v } : x)))} required />
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange(rows.filter((_, j) => j !== i))} aria-label={t("common.remove")}><Trash2 className="size-4" /></Button>
         </div>
       ))}
+      {entry && <HelpPanel text={entry.text} example={entry.example} exampleLabel={exampleLabel} />}
       <Button type="button" size="sm" variant="secondary" onClick={() => onChange([...rows, { name: "", hours: "", hourly_rate: "" }])}><Plus className="size-4" /> {t("common.add")}</Button>
     </fieldset>
   );
@@ -189,6 +198,7 @@ function RunCostingDialog({ open, onClose, product, onDone }: { open: boolean; o
   const [m, setM] = useState({ overhead: "0", packaging: "0", other_direct: "0", scrap: "0", rework: "0", rework_cost: "0" });
   const [landed, setLanded] = useState({ quantity: "", unit_purchase_price: "", fx_rate: "1", freight: "0", insurance: "0", duty: "0", handling: "0", other_acquisition: "0", qty_received_good: "" });
   const [direct, setDirect] = useState({ unit_cost: "", justification: "" });
+  const { structure: structureHelp } = useHelp();
 
   useEffect(() => {
     if (open) setStructure(defaultStructure);
@@ -234,8 +244,8 @@ function RunCostingDialog({ open, onClose, product, onDone }: { open: boolean; o
   });
 
   const trace = engineTrace(run.error);
-  const dec = (obj: Record<string, string>, set: (o: never) => void, key: string, label: string, suffix?: string) => (
-    <Field label={label}>{(id) => <DecimalInput id={id} suffix={suffix} value={obj[key]} onChange={(v) => set({ ...obj, [key]: v } as never)} />}</Field>
+  const dec = (obj: Record<string, string>, set: (o: never) => void, key: string, label: string, suffix?: string, help?: string) => (
+    <Field label={label} help={help}>{(id) => <DecimalInput id={id} suffix={suffix} value={obj[key]} onChange={(v) => set({ ...obj, [key]: v } as never)} />}</Field>
   );
 
   return (
@@ -245,7 +255,7 @@ function RunCostingDialog({ open, onClose, product, onDone }: { open: boolean; o
           <Alert title={errorText(run.error)}>{trace.length > 0 && <div className="mt-2"><Trace lines={trace} /></div>}</Alert>
         )}
         <div className="grid gap-4 sm:grid-cols-4">
-          <Field label={t("cost.structure")} className="sm:col-span-2">
+          <Field label={t("cost.structure")} help="cost.structure" className="sm:col-span-2">
             {(id) => (
               <Select id={id} value={structure} onChange={(e) => setStructure(e.target.value)}>
                 {product.product_type === "FINISHED_GOOD" && <option value="BOM_BASED">{t("cost.BOM_BASED")}</option>}
@@ -254,8 +264,8 @@ function RunCostingDialog({ open, onClose, product, onDone }: { open: boolean; o
               </Select>
             )}
           </Field>
-          <Field label={t("cost.asOf")}>{(id) => <Input id={id} type="date" required value={asOf} onChange={(e) => setAsOf(e.target.value)} />}</Field>
-          <Field label={t("mp.nature")}>
+          <Field label={t("cost.asOf")} help="cost.asOf">{(id) => <Input id={id} type="date" required value={asOf} onChange={(e) => setAsOf(e.target.value)} />}</Field>
+          <Field label={t("mp.nature")} help="cost.nature">
             {(id) => (
               <Select id={id} value={nature} onChange={(e) => { setNature(e.target.value); setMethod(e.target.value === "ACTUAL" ? "ACTUAL" : e.target.value === "ESTIMATE" ? "ESTIMATED" : "STANDARD"); }}>
                 {["STANDARD", "ACTUAL", "ESTIMATE"].map((n) => <option key={n} value={n}>{t(`nature.${n}`)}</option>)}
@@ -264,46 +274,51 @@ function RunCostingDialog({ open, onClose, product, onDone }: { open: boolean; o
           </Field>
         </div>
 
+        <Alert tone="info" title={t(`cost.${structure}`)}>{structureHelp(structure)}</Alert>
+
         {structure === "BOM_BASED" && (
           <div className="space-y-5">
-            <ResourceRows label={t("cost.labor")} rows={labor} onChange={setLabor} />
-            <ResourceRows label={t("cost.machines")} rows={machines} onChange={setMachines} />
+            <ResourceRows label={t("cost.labor")} help="cost.labor" rows={labor} onChange={setLabor} />
+            <ResourceRows label={t("cost.machines")} help="cost.machines" rows={machines} onChange={setMachines} />
             <div className="grid gap-4 sm:grid-cols-3">
-              {dec(m, setM as never, "overhead", t("cost.overhead"))}
-              {dec(m, setM as never, "packaging", t("cost.packaging"))}
-              {dec(m, setM as never, "other_direct", t("cost.other"))}
-              {dec(m, setM as never, "scrap", t("cost.scrap"), "%")}
-              {dec(m, setM as never, "rework", t("cost.rework"), "%")}
-              {dec(m, setM as never, "rework_cost", t("cost.reworkCost"))}
+              {dec(m, setM as never, "overhead", t("cost.overhead"), undefined, "cost.overhead")}
+              {dec(m, setM as never, "packaging", t("cost.packaging"), undefined, "cost.packaging")}
+              {dec(m, setM as never, "other_direct", t("cost.other"), undefined, "cost.other")}
+              {dec(m, setM as never, "scrap", t("cost.scrap"), "%", "cost.scrap")}
+              {dec(m, setM as never, "rework", t("cost.rework"), "%", "cost.rework")}
+              {dec(m, setM as never, "rework_cost", t("cost.reworkCost"), undefined, "cost.reworkCost")}
             </div>
           </div>
         )}
 
         {structure === "LANDED_COST" && (
           <div className="grid gap-4 sm:grid-cols-3">
-            {dec(landed, setLanded as never, "quantity", t("cost.qty"))}
-            {dec(landed, setLanded as never, "unit_purchase_price", t("cost.purchasePrice"))}
-            {dec(landed, setLanded as never, "fx_rate", t("cost.fx"))}
-            {dec(landed, setLanded as never, "freight", t("cost.freight"))}
-            {dec(landed, setLanded as never, "insurance", t("cost.insurance"))}
-            {dec(landed, setLanded as never, "duty", t("cost.duty"), "%")}
-            {dec(landed, setLanded as never, "handling", t("cost.handling"))}
-            {dec(landed, setLanded as never, "other_acquisition", t("cost.otherAcq"))}
-            {dec(landed, setLanded as never, "qty_received_good", `${t("cost.goodQty")} (${t("common.optional")})`)}
+            {dec(landed, setLanded as never, "quantity", t("cost.qty"), undefined, "cost.qty")}
+            {dec(landed, setLanded as never, "unit_purchase_price", t("cost.purchasePrice"), undefined, "cost.purchasePrice")}
+            {dec(landed, setLanded as never, "fx_rate", t("cost.fx"), undefined, "cost.fx")}
+            {dec(landed, setLanded as never, "freight", t("cost.freight"), undefined, "cost.freight")}
+            {dec(landed, setLanded as never, "insurance", t("cost.insurance"), undefined, "cost.insurance")}
+            {dec(landed, setLanded as never, "duty", t("cost.duty"), "%", "cost.duty")}
+            {dec(landed, setLanded as never, "handling", t("cost.handling"), undefined, "cost.handling")}
+            {dec(landed, setLanded as never, "other_acquisition", t("cost.otherAcq"), undefined, "cost.otherAcq")}
+            {dec(landed, setLanded as never, "qty_received_good", `${t("cost.goodQty")} (${t("common.optional")})`, undefined, "cost.goodQty")}
           </div>
         )}
 
         {structure === "DIRECT_INPUT" && (
           <div className="grid gap-4">
-            <Field label={t("cost.unitCost")}>{(id) => <DecimalInput id={id} required value={direct.unit_cost} onChange={(v) => setDirect({ ...direct, unit_cost: v })} />}</Field>
-            <Field label={t("cost.justification")}>{(id) => <Textarea id={id} required value={direct.justification} onChange={(e) => setDirect({ ...direct, justification: e.target.value })} />}</Field>
+            <Field label={t("cost.unitCost")} help="cost.unitCost">{(id) => <DecimalInput id={id} required value={direct.unit_cost} onChange={(v) => setDirect({ ...direct, unit_cost: v })} />}</Field>
+            <Field label={t("cost.justification")} help="cost.justification">{(id) => <Textarea id={id} required value={direct.justification} onChange={(e) => setDirect({ ...direct, justification: e.target.value })} />}</Field>
           </div>
         )}
 
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={activate} onChange={(e) => setActivate(e.target.checked)} className="accent-[var(--accent)]" />
-          {t("cost.activate")}
-        </label>
+        <div className="flex items-center gap-1.5">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={activate} onChange={(e) => setActivate(e.target.checked)} className="accent-[var(--accent)]" />
+            {t("cost.activate")}
+          </label>
+          <LegendWithHelp label={t("cost.activate")} help="cost.activate" iconOnly />
+        </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>{t("common.cancel")}</Button>
           <Button type="submit" loading={run.isPending}>{t("cost.run")}</Button>

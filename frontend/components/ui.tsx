@@ -2,7 +2,8 @@
 
 import clsx from "clsx";
 import { AlertTriangle, Info, Loader2, X } from "lucide-react";
-import { forwardRef, useEffect, useId, useRef } from "react";
+import { forwardRef, useEffect, useId, useRef, useState } from "react";
+import { useHelp } from "@/lib/help";
 
 export function cn(...args: Parameters<typeof clsx>) {
   return clsx(...args);
@@ -61,23 +62,128 @@ export function Textarea({ className, ...rest }: React.TextareaHTMLAttributes<HT
 export function Field({
   label,
   hint,
+  help,
   children,
   className,
 }: {
   label: string;
   hint?: string;
+  /** Kunci teks bantuan di lib/help.ts — tampil sebagai ⓘ dan kotak bantuan saat kolom diisi. */
+  help?: string;
   children: (id: string) => React.ReactNode;
   className?: string;
 }) {
   const id = useId();
+  const helpId = `${id}-help`;
+  const { help: getHelp, exampleLabel } = useHelp();
+  const entry = help ? getHelp(help) : undefined;
+
+  // Hubungkan kontrol ke teks bantuan untuk pembaca layar.
+  useEffect(() => {
+    if (!entry) return;
+    document.getElementById(id)?.setAttribute("aria-describedby", helpId);
+  }, [entry, id, helpId]);
+
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={id} className="text-sm font-medium text-ink">
-        {label}
-      </label>
+    <div className={cn("group/field flex flex-col gap-1.5", className)}>
+      {label && (
+        <div className="flex items-center gap-1.5">
+          <label htmlFor={id} className="text-sm font-medium text-ink">
+            {label}
+          </label>
+          {entry && <InfoTip text={entry.text} example={entry.example} exampleLabel={exampleLabel} label={label} />}
+        </div>
+      )}
       {children(id)}
       {hint && <p className="text-xs text-muted">{hint}</p>}
+      {entry && <HelpPanel id={helpId} text={entry.text} example={entry.example} exampleLabel={exampleLabel} />}
     </div>
+  );
+}
+
+/** Kotak bantuan yang muncul saat kolom di dalam grupnya sedang aktif (focus). */
+export function HelpPanel({ id, text, example, exampleLabel, always }: { id?: string; text: string; example?: string; exampleLabel: string; always?: boolean }) {
+  return (
+    <div
+      id={id}
+      role="note"
+      className={cn(
+        "rounded-lg border border-accent/20 bg-accent-soft px-3 py-2 text-xs leading-relaxed text-ink",
+        // Hanya saat kolom isian aktif — bukan saat tombol ditekan, agar tombol tidak bergeser di tengah klik.
+        !always &&
+          "hidden group-has-[input:focus]/field:block group-has-[select:focus]/field:block group-has-[textarea:focus]/field:block",
+      )}
+    >
+      <p>{text}</p>
+      {example && (
+        <p className="mt-1 text-muted">
+          <span className="font-medium text-accent">{exampleLabel}:</span> {example}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Ikon ⓘ: penjelasan muncul saat kursor diarahkan, saat difokus keyboard, atau saat diketuk (HP). */
+export function InfoTip({ text, example, exampleLabel, label }: { text: string; example?: string; exampleLabel?: string; label: string }) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const ref = useRef<HTMLButtonElement>(null);
+  const show = () => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    const width = 288;
+    setPos({ top: r.bottom + 8, left: Math.max(8, Math.min(r.left - 12, window.innerWidth - width - 8)) });
+  };
+  const hide = () => setPos(null);
+  useEffect(() => {
+    if (!pos) return;
+    window.addEventListener("scroll", hide, true);
+    return () => window.removeEventListener("scroll", hide, true);
+  }, [pos]);
+  return (
+    <>
+      <button
+        ref={ref}
+        type="button"
+        aria-label={`Info: ${label}`}
+        aria-expanded={Boolean(pos)}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        onClick={() => (pos ? hide() : show())}
+        onKeyDown={(e) => e.key === "Escape" && hide()}
+        className="rounded-full text-muted transition-colors hover:text-accent"
+      >
+        <Info className="size-3.5" aria-hidden />
+      </button>
+      {pos && (
+        <span
+          role="tooltip"
+          style={{ top: pos.top, left: pos.left }}
+          className="fixed z-[100] w-72 rounded-lg bg-ink px-3 py-2 text-xs leading-relaxed font-normal text-white shadow-lg"
+        >
+          {text}
+          {example && (
+            <span className="mt-1 block text-white/70">
+              {exampleLabel}: {example}
+            </span>
+          )}
+        </span>
+      )}
+    </>
+  );
+}
+
+/** Judul bagian form dengan ⓘ, untuk grup kolom (baris fee, tenaga kerja, dll.). */
+export function LegendWithHelp({ label, help, iconOnly }: { label: string; help: string; iconOnly?: boolean }) {
+  const { help: getHelp, exampleLabel } = useHelp();
+  const entry = getHelp(help);
+  return (
+    <span className="flex items-center gap-1.5 text-sm font-medium">
+      {!iconOnly && label}
+      {entry && <InfoTip text={entry.text} example={entry.example} exampleLabel={exampleLabel} label={label} />}
+    </span>
   );
 }
 
