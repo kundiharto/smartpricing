@@ -60,6 +60,9 @@ def clean_db(admin_engine) -> Iterator[None]:
 
 @pytest.fixture
 def client() -> TestClient:
+    from app.core.rate_limit import reset_all
+
+    reset_all()
     return TestClient(app)
 
 

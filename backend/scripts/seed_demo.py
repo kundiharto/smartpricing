@@ -13,9 +13,12 @@ import sys
 
 import httpx
 
-BASE = "http://127.0.0.1:8000/api/v1"
-EMAIL = "demo@example.com"
-PASSWORD = "demo-smartpricing-2026"
+import os
+
+# Untuk server lain (mis. produksi): SPE_API_BASE=https://.../api/v1 SPE_DEMO_PASSWORD=<acak>
+BASE = os.environ.get("SPE_API_BASE", "http://127.0.0.1:8000/api/v1")
+EMAIL = os.environ.get("SPE_DEMO_EMAIL", "demo@example.com")
+PASSWORD = os.environ.get("SPE_DEMO_PASSWORD", "demo-smartpricing-2026")
 
 
 def ok(r: httpx.Response) -> dict:
@@ -25,7 +28,7 @@ def ok(r: httpx.Response) -> dict:
 
 
 def main() -> None:
-    c = httpx.Client(base_url=BASE, timeout=10)
+    c = httpx.Client(base_url=BASE, timeout=90)
     r = c.post("/auth/register", json={"email": EMAIL, "password": PASSWORD, "full_name": "Pengguna Demo"})
     if r.status_code == 409:
         print("Akun demo sudah ada; data demo tidak dibuat ulang.")

@@ -24,8 +24,13 @@ class Settings(BaseSettings):
     access_token_ttl_minutes: int = 480
 
     def validate_for_runtime(self) -> None:
-        if self.environment == "production" and self.jwt_secret == DEV_JWT_SECRET:
-            raise RuntimeError("SPE_JWT_SECRET wajib diisi di production")
+        if self.environment != "production":
+            return
+        if self.jwt_secret == DEV_JWT_SECRET or len(self.jwt_secret) < 32:
+            raise RuntimeError("SPE_JWT_SECRET wajib diisi di production (minimal 32 karakter acak)")
+        for name in ("database_url", "migration_database_url"):
+            if "localhost" in getattr(self, name) or "_dev@" in getattr(self, name):
+                raise RuntimeError(f"SPE_{name.upper()} masih memakai nilai development")
 
 
 @lru_cache

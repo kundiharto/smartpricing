@@ -67,3 +67,31 @@ def test_audit_log_records_changes(owner):
     assert logs[0]["old_values"]["name"] == "PT Uji"
     assert logs[0]["new_values"]["name"] == "PT Audit"
     assert logs[0]["request_id"]
+
+
+def test_login_rate_limited_per_email(client):
+    make_user(client, email="target@example.com")
+    for _ in range(9):  # make_user sudah login sekali
+        assert client.post("/api/v1/auth/login", json={"email": "target@example.com", "password": "salah-salah-1"}).status_code == 401
+    r = client.post("/api/v1/auth/login", json={"email": "target@example.com", "password": "rahasia-uji-123"})
+    assert r.status_code == 429
+    assert r.json()["error"]["code"] == "RATE_LIMITED"
+    # email lain tidak terdampak
+    assert client.post("/api/v1/auth/login", json={"email": "lain@example.com", "password": "x"}).status_code == 401
+
+
+def test_production_settings_guard():
+    import pytest
+
+    from app.core.config import Settings
+
+    with pytest.raises(RuntimeError, match="JWT"):
+        Settings(environment="production").validate_for_runtime()
+    with pytest.raises(RuntimeError, match="development"):
+        Settings(environment="production", jwt_secret="x" * 40).validate_for_runtime()
+    Settings(
+        environment="production",
+        jwt_secret="x" * 40,
+        database_url="postgresql+psycopg://app:secret@db.example.com/app?sslmode=require",
+        migration_database_url="postgresql+psycopg://owner:secret@db.example.com/app?sslmode=require",
+    ).validate_for_runtime()

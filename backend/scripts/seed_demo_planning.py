@@ -12,7 +12,7 @@ from seed_demo import BASE, EMAIL, PASSWORD, ok
 
 
 def main() -> None:
-    c = httpx.Client(base_url=BASE, timeout=20)
+    c = httpx.Client(base_url=BASE, timeout=90)
     token = ok(c.post("/auth/login", json={"email": EMAIL, "password": PASSWORD}))["access_token"]
     c.headers["Authorization"] = f"Bearer {token}"
     org = next(o for o in ok(c.get("/organizations")) if o["slug"] == "demo-roti")

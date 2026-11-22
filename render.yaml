@@ -1,0 +1,21 @@
+# Render Blueprint: server API Smart Pricing Engine.
+# Database ada di Neon; dua URL koneksinya diisi saat Blueprint dibuat (lihat deploy/DEPLOY.md).
+services:
+  - type: web
+    name: smartpricing-api
+    runtime: docker
+    region: singapore
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: SPE_ENVIRONMENT
+        value: production
+      - key: SPE_JWT_SECRET
+        generateValue: true
+      - key: SPE_DATABASE_URL
+        sync: false
+      - key: SPE_MIGRATION_DATABASE_URL
+        sync: false

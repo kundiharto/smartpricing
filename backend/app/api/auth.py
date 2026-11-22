@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from sqlalchemy import select, text
 
 from app.api.deps import DB, CurrentUser
 from app.core.db import set_context
 from app.core.errors import ApiError, conflict
+from app.core.rate_limit import client_ip, login_by_email, login_by_ip, register_by_ip
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models import MemberRole, Organization, OrganizationMember, Role, User
 from app.schemas import Envelope, LoginIn, MembershipOut, MeOut, RegisterIn, TokenOut, UserOut, ok
@@ -16,7 +17,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=Envelope[UserOut], status_code=201)
-def register(body: RegisterIn, db: DB) -> Envelope:
+def register(body: RegisterIn, db: DB, request: Request) -> Envelope:
+    register_by_ip.check(client_ip(request))
     if db.scalar(text("SELECT auth_email_exists(:e)"), {"e": body.email}):
         raise conflict("Email sudah terdaftar")
     user_id = uuid.uuid4()
@@ -37,7 +39,9 @@ def register(body: RegisterIn, db: DB) -> Envelope:
 
 
 @router.post("/login", response_model=Envelope[TokenOut])
-def login(body: LoginIn, db: DB) -> Envelope:
+def login(body: LoginIn, db: DB, request: Request) -> Envelope:
+    login_by_ip.check(client_ip(request))
+    login_by_email.check(body.email.lower())
     row = db.execute(text("SELECT id, password_hash, status FROM auth_lookup_user(:e)"), {"e": body.email}).first()
     valid = verify_password(row.password_hash if row else None, body.password)
     if not row or not valid or row.status != "ACTIVE":
