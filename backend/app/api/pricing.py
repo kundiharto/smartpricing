@@ -218,7 +218,14 @@ def list_recommendations(
         stmt = stmt.where(PricingRecommendation.product_id == product_id)
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
     rows = db.scalars(stmt.order_by(PricingRecommendation.created_at.desc()).limit(limit).offset(offset)).all()
-    return ok([RecommendationOut.model_validate(r) for r in rows], total=total, limit=limit, offset=offset)
+    return ok([_with_unit_cost(RecommendationOut, r) for r in rows], total=total, limit=limit, offset=offset)
+
+
+def _with_unit_cost(schema: type[RecommendationOut], rec: PricingRecommendation) -> RecommendationOut:
+    out = schema.model_validate(rec)
+    raw = (rec.calculation_snapshot or {}).get("unit_cost")
+    out.unit_cost = Decimal(raw) if raw is not None else None
+    return out
 
 
 @router.get("/recommendations/{rec_id}", response_model=Envelope[RecommendationDetail])
@@ -226,4 +233,4 @@ def read_recommendation(rec_id: uuid.UUID, ctx: Read, db: DB) -> Envelope:
     rec = db.get(PricingRecommendation, rec_id)
     if rec is None or rec.organization_id != ctx.org_id:
         raise not_found("Rekomendasi harga")
-    return ok(RecommendationDetail.model_validate(rec))
+    return ok(_with_unit_cost(RecommendationDetail, rec))

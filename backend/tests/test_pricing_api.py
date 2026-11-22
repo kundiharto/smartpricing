@@ -82,6 +82,7 @@ def test_recommend_stores_snapshot(owner):
 
     listed = owner.ok(owner.get("/pricing/recommendations", params={"product_id": p["id"]}))
     assert [r["id"] for r in listed] == [rec["id"]]
+    assert listed[0]["unit_cost"] == "60000"
     logs = owner.ok(owner.get("/audit-logs", params={"entity_type": "pricing_recommendation"}))
     assert logs[0]["entity_id"] == rec["id"]
 

@@ -99,7 +99,9 @@ def get_organization(org_id: uuid.UUID, user: CurrentUser, db: DB) -> Envelope:
     org = db.get(Organization, org_id)
     if org is None:
         raise not_found("Organisasi")
-    return ok(_org_out(db, org, ctx.role_codes))
+    out = _org_out(db, org, ctx.role_codes)
+    out.my_permissions = sorted(ctx.permissions)
+    return ok(out)
 
 
 @router.patch("/{org_id}", response_model=Envelope[OrganizationOut])

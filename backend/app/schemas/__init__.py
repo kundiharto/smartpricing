@@ -133,6 +133,7 @@ class OrganizationOut(ORM):
     primary_business_model: str | None = None
     is_hybrid: bool = False
     my_roles: list[str] = []
+    my_permissions: list[str] = []
 
 
 class MemberAdd(BaseModel):
@@ -405,6 +406,7 @@ class RecommendationOut(ORM):
     currency: str
     effective_date: date
     warnings: list[Any]
+    unit_cost: Decimal | None = None
     engine_version: str
     input_hash: str
     status: str
